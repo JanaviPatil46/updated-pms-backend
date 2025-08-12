@@ -1925,7 +1925,34 @@ const getCompleteTaskListByAccount = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const bulkUpdateTaskStatus = async (req, res) => {
+    try {
+        const { taskIds, status } = req.body;
 
+        if (!Array.isArray(taskIds) || taskIds.length === 0) {
+            return res.status(400).json({ message: "taskIds must be a non-empty array." });
+        }
+
+        if (!status) {
+            return res.status(400).json({ message: "Status is required." });
+        }
+
+        const result = await Task.updateMany(
+            { _id: { $in: taskIds } },
+            { $set: { status } }
+        );
+
+        res.status(200).json({
+            message: "Task statuses updated successfully.",
+            matchedCount: result.matchedCount,
+            modifiedCount: result.modifiedCount
+        });
+
+    } catch (error) {
+        console.error("Error in bulkUpdateTaskStatus:", error);
+        res.status(500).json({ message: "Internal server error.", error: error.message });
+    }
+};
 
 module.exports = {
   getAllTasks,
@@ -1936,5 +1963,5 @@ module.exports = {
   updateTasks,
   getsTaskById,
   getCompleteTaskList,getTaskListByAccountId,
-  getCompleteTaskListByAccount
+  getCompleteTaskListByAccount,bulkUpdateTaskStatus
 };

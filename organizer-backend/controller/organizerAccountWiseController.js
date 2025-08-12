@@ -676,6 +676,36 @@ const getPendingOrganizersByAccountId = async (req, res) => {
 };
 
 //update a new OrganizerTemplate
+// const updateOrganizerAccountWise = async (req, res) => {
+//   const { id } = req.params;
+
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid TaskTemplate ID" });
+//   }
+
+//   try {
+//     const updatedOrganizerAccountWise =
+//       await OrganizerAccountWise.findOneAndUpdate(
+//         { _id: id },
+//         { ...req.body },
+//         { new: true }
+//       );
+
+//     if (!updatedOrganizerAccountWise) {
+//       return res.status(404).json({ error: "No such OrganizerAccountWise" });
+//     }
+
+//     res
+//       .status(200)
+//       .json({
+//         message: "Organizer AccountWise Updated successfully",
+//         updatedOrganizerAccountWise,
+//       });
+//   } catch (error) {
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
+
 const updateOrganizerAccountWise = async (req, res) => {
   const { id } = req.params;
 
@@ -684,25 +714,40 @@ const updateOrganizerAccountWise = async (req, res) => {
   }
 
   try {
-    const updatedOrganizerAccountWise =
-      await OrganizerAccountWise.findOneAndUpdate(
-        { _id: id },
-        { ...req.body },
-        { new: true }
-      );
+    // Validate the request body structure
+    if (!req.body.sections || !Array.isArray(req.body.sections)) {
+      return res.status(400).json({ error: "Invalid sections data" });
+    }
+
+    // Process file metadata updates
+    const updateData = {
+      ...req.body,
+      lastSaved: new Date() // Always update the lastSaved timestamp
+    };
+
+    const updatedOrganizerAccountWise = await OrganizerAccountWise.findOneAndUpdate(
+      { _id: id },
+      updateData,
+      { 
+        new: true,
+        runValidators: true // Ensure schema validations run
+      }
+    );
 
     if (!updatedOrganizerAccountWise) {
       return res.status(404).json({ error: "No such OrganizerAccountWise" });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Organizer AccountWise Updated successfully",
-        updatedOrganizerAccountWise,
-      });
+    res.status(200).json({
+      message: "Organizer AccountWise Updated successfully",
+      updatedOrganizerAccountWise,
+    });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Error updating organizer:", error);
+    return res.status(500).json({ 
+      error: error.message,
+      details: "Failed to update organizer with file information" 
+    });
   }
 };
 const transporter = require("../middleware/nodemailer.js");
@@ -830,22 +875,80 @@ const updateFormElementActiveStatus = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+// const autoSaveOrganizer = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const updateData = req.body;
+
+//         // Validate ID
+//         if (!mongoose.Types.ObjectId.isValid(id)) {
+//             return res.status(400).json({ message: "Invalid organizer ID" });
+//         }
+
+//         // Add lastSaved timestamp
+//         // updateData.lastSaved = new Date();
+
+//         const updatedOrganizer = await OrganizerAccountWise.findByIdAndUpdate(
+//             id,
+//             { $set: updateData },
+//             { new: true, runValidators: true }
+//         );
+
+//         if (!updatedOrganizer) {
+//             return res.status(404).json({ message: "Organizer not found" });
+//         }
+
+//         res.status(200).json({
+//             message: "Organizer auto-saved successfully",
+//             organizer: updatedOrganizer
+//         });
+//     } catch (error) {
+//         console.error("Error auto-saving organizer:", error);
+//         res.status(500).json({ 
+//             message: "Server error during auto-save",
+//             error: error.message 
+//         });
+//     }
+// };
+
 const autoSaveOrganizer = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const { sections } = req.body; // Expect sections array with formElement updates
 
         // Validate ID
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid organizer ID" });
         }
 
-        // Add lastSaved timestamp
-        // updateData.lastSaved = new Date();
+        // Build the update object dynamically
+        const updateOperations = {};
+        
+        sections.forEach((section, sectionIndex) => {
+            if (section.formElements && section.formElements.length > 0) {
+                section.formElements.forEach((element, elementIndex) => {
+                    const basePath = `sections.${sectionIndex}.formElements.${elementIndex}`;
+                    
+                    // Only update answer-related fields
+                    if (element.textvalue !== undefined) {
+                        updateOperations[`${basePath}.textvalue`] = element.textvalue;
+                    }
+                    if (element.options !== undefined) {
+                        updateOperations[`${basePath}.options`] = element.options;
+                    }
+                    if (element.fileMetadata !== undefined) {
+                        updateOperations[`${basePath}.fileMetadata`] = element.fileMetadata;
+                    }
+                });
+            }
+        });
+
+        // Add lastSaved timestamp if needed
+        updateOperations.lastSaved = new Date();
 
         const updatedOrganizer = await OrganizerAccountWise.findByIdAndUpdate(
             id,
-            { $set: updateData },
+            { $set: updateOperations },
             { new: true, runValidators: true }
         );
 
@@ -854,7 +957,7 @@ const autoSaveOrganizer = async (req, res) => {
         }
 
         res.status(200).json({
-            message: "Organizer auto-saved successfully",
+            message: "Form answers auto-saved successfully",
             organizer: updatedOrganizer
         });
     } catch (error) {
@@ -865,7 +968,6 @@ const autoSaveOrganizer = async (req, res) => {
         });
     }
 };
-
 module.exports = {
   createOrganizerAccountWise,
   getOrganizerAccountWise,

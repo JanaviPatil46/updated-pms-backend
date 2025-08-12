@@ -66,6 +66,14 @@ const organizerSectionSchemaformElementSchema = new mongoose.Schema({
   text: { type: String },
   textvalue: { type: String },
   questionsectionsettings: QuestionSectionSchema,
+fileMetadata: {
+    fileName: { type: String },
+    filePath: { type: String },
+    uploadedAt: { type: Date, default: Date.now },
+    fileSize: { type: Number },
+    fileType: { type: String },
+    originalName: { type: String } // Store the original file name
+  },
   active: {
     type: Boolean,
     default: false,

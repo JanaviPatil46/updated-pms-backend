@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { getAllTasks,createTask,getTaskList,getsTaskById,deleteTask,updateTasks,
-    getsTaskListById,getCompleteTaskList,getTaskListByAccountId,getCompleteTaskListByAccount
+    getsTaskListById,getCompleteTaskList,getTaskListByAccountId,getCompleteTaskListByAccount,bulkUpdateTaskStatus
  } = require("../controllers/accountTasksController");
 
 
@@ -14,6 +14,7 @@ router.patch("/updatatasks/:id",updateTasks)
 router.get("/task/listbyid/:id",getsTaskListById)
 router.get("/tasks/tasklist/completed",getCompleteTaskList)
 router.get("/tasks/taskslist/byaccount/:accountId",getTaskListByAccountId)
-router.get("/tasks/tasklist/byaccount/completed/:accountId",getCompleteTaskListByAccount)
+router.get("/tasks/tasklist/byaccount/completed/:accountId",getCompleteTaskListByAccount);
+router.post('/tasks/updatestatus', bulkUpdateTaskStatus);
 module.exports = router;
 // getActiveJobList

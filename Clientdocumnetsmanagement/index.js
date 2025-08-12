@@ -15,7 +15,13 @@ const clientRoutes = require('./routes/clientsRoutes');
 const adminRoutes = require("./routes/AdminRoutes")
 const firmDocsRoutes = require("./routes/firmDocsRouter")
 // app.use(cors({ origin: "http://localhost:3000" })); // Allow frontend to access API
-app.use(cors());
+// app.use(cors());
+// Enable CORS for frontend
+app.use(cors({
+  origin: ['http://localhost:3001', 'http://127.0.0.1:3001','http://localhost:3000'], // allow both
+  methods: ['GET', 'POST', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json()); // Allows parsing JSON body
 app.use(express.urlencoded({ extended: true })); // Allows parsing form data
 const nodemailer = require("nodemailer");
@@ -546,7 +552,28 @@ app.get('/api/files', async (req, res) => {
   }
 });
 
+// const sendApprovalEmail = require("./utils/sendApprovalEmail");
+// app.post("/request-approval", async (req, res) => {
+//   const { accountId, filename, fileUrl, clientEmail } = req.body;
 
+//   try {
+//     // Send email via Nodemailer, SendGrid, SES, etc.
+//     await sendApprovalEmail({
+//       to: clientEmail,
+//       subject: "Document Approval Request",
+//       html: `
+//         <p>Hello,</p>
+//         <p>Please review and approve the following document:</p>
+//         <a href="${fileUrl}" target="_blank">${filename}</a>
+//       `,
+//     });
+
+//     res.json({ message: "Approval request sent" });
+//   } catch (err) {
+//     console.error("Email send error:", err);
+//     res.status(500).json({ error: "Failed to send approval request" });
+//   }
+// });
 
 
 
@@ -555,4 +582,7 @@ app.get('/api/files', async (req, res) => {
 app.use("/admindocs", adminRoutes)
 app.use('/clientdocs', clientRoutes);
 app.use('/firmDocs',firmDocsRoutes)
+const approvalRoutes = require("./routes/approvalRoutes");
+
+app.use("/approvals", approvalRoutes);
 app.listen(8006, () => console.log("Server running on port 8006"));
