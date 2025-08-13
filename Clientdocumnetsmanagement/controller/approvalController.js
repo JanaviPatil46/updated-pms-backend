@@ -42,7 +42,9 @@ exports.getClientApprovals = async (req, res) => {
   try {
     const approvals = await Approval.find({
         
-      clientEmail: req.params.email,
+      // clientEmail: req.params.email,
+      // status: "pending",
+       accountId: req.params.accountId,
       status: "pending",
     }).sort({ createdAt: -1 });
 
@@ -53,21 +55,21 @@ exports.getClientApprovals = async (req, res) => {
 };
 
 // // 📌 Get all pending approvals for a specific account
-// exports.getClientApprovals = async (req, res) => {
-//   try {
-//     const { accountId } = req.params;
+exports.getClientApprovalsByAccount = async (req, res) => {
+  try {
+    const { accountId } = req.params;
 
-//     const approvals = await Approval.find({
-//       accountId: accountId,
-//       status: "pending",
-//     }).sort({ createdAt: -1 });
+    const approvals = await Approval.find({
+      accountId: accountId,
+      // status: "pending",
+    }).sort({ createdAt: -1 });
 
-//     res.json({ approvals });
-//   } catch (err) {
-//     console.error("Error fetching approvals:", err);
-//     res.status(500).json({ error: "Failed to fetch approvals" });
-//   }
-// };
+    res.json({ approvals });
+  } catch (err) {
+    console.error("Error fetching approvals:", err);
+    res.status(500).json({ error: "Failed to fetch approvals" });
+  }
+};
 
 // // 📌 Update approval status
 // exports.updateApprovalStatus = async (req, res) => {

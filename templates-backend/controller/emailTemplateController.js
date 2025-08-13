@@ -216,11 +216,12 @@ const updateEmailTemplate = async (req, res) => {
       return res.status(404).json({ error: "No such EmailTemplate" });
     }
 
-    const { templatename, from, emailsubject, emailbody, active } = req.body;
+    const { templatename, from, emailsubject, emailbody,mode, active } = req.body;
 
     const updateData = {
       templatename,
       from,
+       mode,
       emailsubject,
       emailbody,
       active,
