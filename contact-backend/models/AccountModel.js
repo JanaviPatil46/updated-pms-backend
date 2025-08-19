@@ -37,7 +37,7 @@ const accountSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Contacts",
-        // required    : [true, 'Contacts are required'],
+       
       },
     ],
     userid: {
@@ -55,10 +55,7 @@ const accountSchema = new mongoose.Schema(
  companyName: {
       type: String,
     },
-    // companyAddress: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "companyAddress", // Ensure this matches your CompanyAddresses model
-    // },
+   
         country: {
         name: {
             type: String,

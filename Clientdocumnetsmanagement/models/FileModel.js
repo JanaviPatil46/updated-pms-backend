@@ -11,10 +11,10 @@
 //   {
 //     filename: { type: String, required: true },
 //     filePath: { type: String, required: true },
-    
-//     permissions: { 
-//       type: permissionSchema, 
-//       required: true, 
+
+//     permissions: {
+//       type: permissionSchema,
+//       required: true,
 //       default: () => ({})  // Sets default permissions if not provided
 //     },
 //   },
@@ -23,27 +23,35 @@
 
 // module.exports = mongoose.model("File", FileSchema);
 
-
 const mongoose = require("mongoose");
 
-const permissionSchema = new mongoose.Schema({
-  canView: { type: Boolean, default: true },
-  canDownload: { type: Boolean, default: true },
-  canDelete: { type: Boolean, default: false },
-  canUpdate: { type: Boolean, default: false },
-}, { _id: false });
+const permissionSchema = new mongoose.Schema(
+  {
+    canView: { type: Boolean, default: true },
+    canDownload: { type: Boolean, default: true },
+    canDelete: { type: Boolean, default: false },
+    canUpdate: { type: Boolean, default: false },
+    canApprove: { type: Boolean, default: false },
+    canEsign: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 const FileSchema = new mongoose.Schema(
   {
     filename: { type: String, required: true },
     filePath: { type: String, required: true },
-    
-    accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
 
-    permissions: { 
-      type: permissionSchema, 
-      required: true, 
-      default: () => ({})
+    accountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: true,
+    },
+
+    permissions: {
+      type: permissionSchema,
+      required: true,
+      default: () => ({}),
     },
   },
   { timestamps: true }

@@ -50,6 +50,8 @@ const uploadFileInFirm = async (req, res) => {
       canDownload: true,
       canDelete: false,
       canUpdate: false,
+      canEsign:false,
+      canApprove:false
     };
   
     // Parse permissions
@@ -69,6 +71,8 @@ const uploadFileInFirm = async (req, res) => {
         canDownload: permissions.canDownload,
         canDelete: permissions.canDelete,
         canUpdate: permissions.canUpdate,
+         canApprove: permissions.canApprove,
+    canEsign: permissions.canEsign,
       },
     });
   
@@ -122,6 +126,8 @@ const uploadFileInFirm = async (req, res) => {
         canDownload: true,
         canDelete: false,
         canUpdate: false,
+        canEsign:false,
+      canApprove:false
       };
   
       const permissions = req.body.permissions || defaultPermissions;
@@ -159,7 +165,11 @@ const uploadFileInFirm = async (req, res) => {
     typeof permissions.canView !== "boolean" ||
     typeof permissions.canDownload !== "boolean" ||
     typeof permissions.canDelete !== "boolean" ||
-    typeof permissions.canUpdate !== "boolean"
+    typeof permissions.canUpdate !== "boolean" ||
+     typeof permissions.canEsign !== "boolean" ||
+      typeof permissions.canApprove !== "boolean" 
+    // canEsign:false,
+      // canApprove:false
   ) {
     return res.status(400).json({ message: "Invalid permissions structure." });
   }

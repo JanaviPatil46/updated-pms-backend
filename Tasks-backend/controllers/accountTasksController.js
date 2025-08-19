@@ -1628,7 +1628,10 @@ const getCompleteTaskList = async (req, res) => {
 const getTaskListByAccountId = async (req, res) => {
   try {
     const { accountId, status } = req.params;
-    const query = { accounts: accountId };
+
+     // Convert accountid string into an array
+     const accountIdsArray = accountId.split(",");
+    const query = { accounts: accountIdsArray };
     if (status !== "all") {
       query.status = { $ne: "Completed" };
     }
@@ -1793,7 +1796,11 @@ const getTaskListByAccountId = async (req, res) => {
 const getCompleteTaskListByAccount = async (req, res) => {
   try {
     const { accountId } = req.params;
-    const tasks = await Task.find({ status: "Completed", accounts: accountId })
+
+     // Convert accountid string into an array
+     const accountIdsArray = accountId.split(",");
+    // const query = { accounts: accountIdsArray };
+    const tasks = await Task.find({ status: "Completed", accounts: accountIdsArray })
       .populate({ path: "accounts", model: "Accounts" })
       .populate({
         path: "job",
