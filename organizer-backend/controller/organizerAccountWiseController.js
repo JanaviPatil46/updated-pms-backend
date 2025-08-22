@@ -752,6 +752,65 @@ const updateOrganizerAccountWise = async (req, res) => {
 };
 const transporter = require("../middleware/nodemailer.js");
 const User = require("../models/userModel.js")
+// const updateOrganizerAndNotify = async (req, res) => {
+//   const { id } = req.params;
+
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid OrganizerAccountWise ID" });
+//   }
+
+//   try {
+//     // Update organizer fields
+//     await OrganizerAccountWise.findByIdAndUpdate(id, { ...req.body });
+
+//     // Re-fetch with populated client and account info
+//     const updatedOrganizerAccountWise = await OrganizerAccountWise.findById(id)
+//       // .populate("organizer.completedby")
+//       .populate({ path: "completedby", model: "User" })
+//       .populate({
+//         path: "accountid",
+//         model: "Accounts",
+//         populate: {
+//           path: "adminUserId",
+//           model: "User",
+//           select: "emailSyncEmail email username"
+//         }
+//       })
+//       .lean();
+//       // .populate({ path: "accountid", model: "Accounts" }); // Assuming you have a ref to Account
+
+//     if (!updatedOrganizerAccountWise) {
+//       return res.status(404).json({ error: "No such OrganizerAccountWise" });
+//     }
+// console.log("updatedOrganizerAccountWise",updatedOrganizerAccountWise)
+//     const completedByUsername =
+//       updatedOrganizerAccountWise.completedby?.username || "Unknown User";
+//     const accountName =
+//       updatedOrganizerAccountWise.accountid?.accountName || "Unknown Account";
+// const adminEmailSync = updatedOrganizerAccountWise.accountid?.adminUserId?.emailSyncEmail
+//     // ✅ Send email to admin
+//     await transporter.sendMail({
+//       from: `<${process.env.EMAIL}>`,
+//       to: adminEmailSync,
+//       subject: `#Organizer completed by ${completedByUsername}`,
+//       html: `
+//         <p><strong>Account:</strong> ${accountName}</p>
+//         <p><strong>Completed by:</strong> ${completedByUsername}</p>
+//         <p><strong>Status:</strong> Organizer marked as completed</p>
+//       `,
+//     });
+
+//     res.status(200).json({
+//       message: "Organizer updated and admin notified",
+//       completedByUsername,
+//       accountName,
+//       updatedOrganizerAccountWise,
+//     });
+//   } catch (error) {
+//     console.error("Error sending email:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 const updateOrganizerAndNotify = async (req, res) => {
   const { id } = req.params;
 
@@ -765,7 +824,6 @@ const updateOrganizerAndNotify = async (req, res) => {
 
     // Re-fetch with populated client and account info
     const updatedOrganizerAccountWise = await OrganizerAccountWise.findById(id)
-      // .populate("organizer.completedby")
       .populate({ path: "completedby", model: "User" })
       .populate({
         path: "accountid",
@@ -777,37 +835,42 @@ const updateOrganizerAndNotify = async (req, res) => {
         }
       })
       .lean();
-      // .populate({ path: "accountid", model: "Accounts" }); // Assuming you have a ref to Account
 
     if (!updatedOrganizerAccountWise) {
       return res.status(404).json({ error: "No such OrganizerAccountWise" });
     }
-console.log("updatedOrganizerAccountWise",updatedOrganizerAccountWise)
+
     const completedByUsername =
       updatedOrganizerAccountWise.completedby?.username || "Unknown User";
     const accountName =
       updatedOrganizerAccountWise.accountid?.accountName || "Unknown Account";
-const adminEmailSync = updatedOrganizerAccountWise.accountid?.adminUserId?.emailSyncEmail
-    // ✅ Send email to admin
-    await transporter.sendMail({
-      from: `<${process.env.EMAIL}>`,
-      to: adminEmailSync,
-      subject: `#Organizer completed by ${completedByUsername}`,
-      html: `
-        <p><strong>Account:</strong> ${accountName}</p>
-        <p><strong>Completed by:</strong> ${completedByUsername}</p>
-        <p><strong>Status:</strong> Organizer marked as completed</p>
-      `,
-    });
+    const adminEmailSync =
+      updatedOrganizerAccountWise.accountid?.adminUserId?.emailSyncEmail;
+
+    // ✅ Only send email if adminEmailSync exists
+    if (adminEmailSync) {
+      await transporter.sendMail({
+        from: `<${process.env.EMAIL}>`,
+        to: adminEmailSync,
+        subject: `#Organizer completed by ${completedByUsername}`,
+        html: `
+          <p><strong>Account:</strong> ${accountName}</p>
+          <p><strong>Completed by:</strong> ${completedByUsername}</p>
+          <p><strong>Status:</strong> Organizer marked as completed</p>
+        `,
+      });
+    }
 
     res.status(200).json({
-      message: "Organizer updated and admin notified",
+      message: adminEmailSync
+        ? "Organizer updated and admin notified"
+        : "Organizer updated (no admin email found)",
       completedByUsername,
       accountName,
       updatedOrganizerAccountWise,
     });
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error updating organizer:", error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -374,7 +374,6 @@ const updateChatDescription = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
 const updateChatFromClient = async (req, res) => {
   try {
     const { id } = req.params;
@@ -419,7 +418,7 @@ const updateChatFromClient = async (req, res) => {
 
     const validContact = account.contacts.filter((contact) => contact.login);
 
-        const placeholderValues = {
+    const placeholderValues = {
       ACCOUNT_NAME: account.accountName || "",
       FIRST_NAME: validContact[0]?.firstName || "",
       MIDDLE_NAME: validContact[0]?.middleName || "",
@@ -469,31 +468,39 @@ const updateChatFromClient = async (req, res) => {
     };
 
     const clientMessage = newDescriptions[0]?.message || "No content";
-    const subject = replacePlaceholders(chat.chatsubject || "", placeholderValues) || "New Chat Message";
+    const subject =
+      replacePlaceholders(chat.chatsubject || "", placeholderValues) ||
+      "New Chat Message";
     const accountName = chat.accountid?.accountName || "Unknown Account";
     const clientId = chat.accountid?._id;
-    const adminEmail = chat.accountid?.adminUserId?.emailSyncEmail || "Unknown";
+    const adminEmail =
+      chat.accountid?.adminUserId?.emailSyncEmail ||
+      chat.accountid?.adminUserId?.email ||
+      null; // <-- fallback check
 
-    // Step 5: Send email
-    await transporter.sendMail({
-      from: `<${process.env.EMAIL}>`,
-      to: adminEmail,
-      subject: `#${clientId} New message ${subject} from ${accountName}`,
-      html: `
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Account:</strong> ${accountName}</p>
-        <p><strong>Message:</strong><br/>${clientMessage}</p>
-      `,
-    });
+    // Step 5: Send email only if adminEmail is present
+    if (adminEmail) {
+      await transporter.sendMail({
+        from: `<${process.env.EMAIL}>`,
+        to: adminEmail,
+        subject: `#${clientId} New message ${subject} from ${accountName}`,
+        html: `
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Account:</strong> ${accountName}</p>
+          <p><strong>Message:</strong><br/>${clientMessage}</p>
+        `,
+      });
+    }
 
     res.status(200).json({
-      message: "Message saved and email sent to admin",
+      message: adminEmail
+        ? "Message saved and email sent to admin"
+        : "Message sent ",
       updatedChat: {
         _id: id,
-        newDescriptions
-      }
+        newDescriptions,
+      },
     });
-
   } catch (error) {
     console.error("Error sending email:", error);
     res.status(500).json({ error: error.message });
@@ -513,109 +520,97 @@ const updateChatFromClient = async (req, res) => {
 //       return res.status(400).json({ error: "No message provided" });
 //     }
 
+//     // Step 1: Fetch chat as lean object
 //     const chat = await AccountwiseChat.findById(id)
-
-//       // .populate({ path: "accountid", model: "Accounts" })
-//       // .populate({ path: "adminUserId", model: "User" });
-//         .populate({
-//     path: "accountid",
-//     model: "Accounts",
-//     populate: {
-//       path: "adminUserId",
-//       model: "User",
-//       select: "emailSyncEmail email username"
-//     }
-//   })
-//   .lean();
+//       .populate({
+//         path: "accountid",
+//         model: "Accounts",
+//         populate: {
+//           path: "adminUserId",
+//           model: "User",
+//           select: "emailSyncEmail email username"
+//         }
+//       })
+//       .lean();
 
 //     if (!chat) {
 //       return res.status(404).json({ error: "Chat not found" });
 //     }
 
-//     // Fetch account details and populate contacts
-//     const account = await Accounts.findById(chat.accountid._id).populate(
-//       "contacts"
-//     );
+//     // Step 2: Update description field directly using $push
+//     await AccountwiseChat.findByIdAndUpdate(id, {
+//       $push: { description: { $each: newDescriptions } }
+//     });
+
+//     // Step 3: Fetch associated account and contacts
+//     const account = await Accounts.findById(chat.accountid._id).populate("contacts");
+
 //     if (!account) {
 //       return res.status(404).json({ error: "Associated account not found" });
 //     }
 
-//     // Filter contacts with login
 //     const validContact = account.contacts.filter((contact) => contact.login);
 
-//     // Get placeholder values
+//         const placeholderValues = {
+//       ACCOUNT_NAME: account.accountName || "",
+//       FIRST_NAME: validContact[0]?.firstName || "",
+//       MIDDLE_NAME: validContact[0]?.middleName || "",
+//       LAST_NAME: validContact[0]?.lastName || "",
+//       CONTACT_NAME: validContact[0]?.contactName || "",
+//       COMPANY_NAME: validContact[0]?.companyName || "",
+//       COUNTRY: validContact[0]?.country || "",
+//       STREET_ADDRESS: validContact[0]?.streetAddress || "",
+//       STATEPROVINCE: validContact[0]?.state || "",
+//       PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+//       ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+//       CITY: validContact[0]?.city || "",
+//       CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
+//       CURRENT_DAY_NUMBER: new Date().getDate(),
+//       CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//         weekday: "long",
+//       }),
+//       CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
+//       CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//         month: "long",
+//       }),
+//       CURRENT_YEAR: new Date().getFullYear(),
+//       LAST_DAY_FULL_DATE: lastDayFullDate,
+//       LAST_DAY_NUMBER: lastDayNumber,
+//       LAST_DAY_NAME: lastDayName,
+//       LAST_WEEK: lastWeek,
+//       LAST_MONTH_NUMBER: lastMonthNumber,
+//       LAST_MONTH_NAME: lastMonthName,
+//       LAST_QUARTER: lastQuarter,
+//       LAST_YEAR: lastYear,
+//       NEXT_DAY_FULL_DATE: nextDayFullDate,
+//       NEXT_DAY_NUMBER: nextDayNumber,
+//       NEXT_DAY_NAME: nextDayName,
+//       NEXT_WEEK: nextWeek,
+//       NEXT_MONTH_NUMBER: nextMonthNumber,
+//       NEXT_MONTH_NAME: nextMonthName,
+//       NEXT_QUARTER: nextQuarter,
+//       NEXT_YEAR: nextYear,
+//     };
 
-    // const placeholderValues = {
-    //   ACCOUNT_NAME: account.accountName || "",
-    //   FIRST_NAME: validContact[0]?.firstName || "",
-    //   MIDDLE_NAME: validContact[0]?.middleName || "",
-    //   LAST_NAME: validContact[0]?.lastName || "",
-    //   CONTACT_NAME: validContact[0]?.contactName || "",
-    //   COMPANY_NAME: validContact[0]?.companyName || "",
-    //   COUNTRY: validContact[0]?.country || "",
-    //   STREET_ADDRESS: validContact[0]?.streetAddress || "",
-    //   STATEPROVINCE: validContact[0]?.state || "",
-    //   PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-    //   ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-    //   CITY: validContact[0]?.city || "",
-    //   CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-    //   CURRENT_DAY_NUMBER: new Date().getDate(),
-    //   CURRENT_DAY_NAME: new Date().toLocaleString("default", {
-    //     weekday: "long",
-    //   }),
-    //   CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-    //   CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
-    //     month: "long",
-    //   }),
-    //   CURRENT_YEAR: new Date().getFullYear(),
-    //   LAST_DAY_FULL_DATE: lastDayFullDate,
-    //   LAST_DAY_NUMBER: lastDayNumber,
-    //   LAST_DAY_NAME: lastDayName,
-    //   LAST_WEEK: lastWeek,
-    //   LAST_MONTH_NUMBER: lastMonthNumber,
-    //   LAST_MONTH_NAME: lastMonthName,
-    //   LAST_QUARTER: lastQuarter,
-    //   LAST_YEAR: lastYear,
-    //   NEXT_DAY_FULL_DATE: nextDayFullDate,
-    //   NEXT_DAY_NUMBER: nextDayNumber,
-    //   NEXT_DAY_NAME: nextDayName,
-    //   NEXT_WEEK: nextWeek,
-    //   NEXT_MONTH_NUMBER: nextMonthNumber,
-    //   NEXT_MONTH_NAME: nextMonthName,
-    //   NEXT_QUARTER: nextQuarter,
-    //   NEXT_YEAR: nextYear,
-    // };
+//     // Replace placeholders in subject
+//     const replacePlaceholders = (template, data) => {
+//       return template.replace(
+//         /\[([\w\s]+)\]/g,
+//         (match, key) => data[key.trim()] || ""
+//       );
+//     };
 
-    // // Replace placeholders in subject
-    // const replacePlaceholders = (template, data) => {
-    //   return template.replace(
-    //     /\[([\w\s]+)\]/g,
-    //     (match, key) => data[key.trim()] || ""
-    //   );
-    // };
-
-//     // Update chat with new client message
-//     chat.description.push(...newDescriptions);
-   
-  
-
-// await chat.save();
-//     // await chat.save();
-//     console.log("new chat", chat);
-// // const adminEmail = chat.adminUserId.emailSyncEmail;
-// console.log("adminEmail", adminEmail);
 //     const clientMessage = newDescriptions[0]?.message || "No content";
-//     const subject = (chat.chatsubject =
-//       replacePlaceholders(chat.chatsubject || "", placeholderValues) ||
-//       "New Chat Message");
+//     const subject = replacePlaceholders(chat.chatsubject || "", placeholderValues) || "New Chat Message";
 //     const accountName = chat.accountid?.accountName || "Unknown Account";
 //     const clientId = chat.accountid?._id;
-//  const adminEmail = chat.accountid?.adminUserId?.emailSyncEmail || "Unknown Account";
-//     // Send email to admin
+//     const adminEmail = chat.accountid?.adminUserId?.emailSyncEmail || "Unknown";
+
+//     // Step 5: Send email
 //     await transporter.sendMail({
 //       from: `<${process.env.EMAIL}>`,
-//       to: adminEmail, // Admin Email
-//       subject: `#${clientId}New message ${subject} from ${accountName} `,
+//       to: adminEmail,
+//       subject: `#${clientId} New message ${subject} from ${accountName}`,
 //       html: `
 //         <p><strong>Subject:</strong> ${subject}</p>
 //         <p><strong>Account:</strong> ${accountName}</p>
@@ -623,16 +618,21 @@ const updateChatFromClient = async (req, res) => {
 //       `,
 //     });
 
-
 //     res.status(200).json({
 //       message: "Message saved and email sent to admin",
-//       updatedChat: chat,
+//       updatedChat: {
+//         _id: id,
+//         newDescriptions
+//       }
 //     });
+
 //   } catch (error) {
 //     console.error("Error sending email:", error);
 //     res.status(500).json({ error: error.message });
 //   }
 // };
+
+
 // Get ChatTemplates with filters (accountid, active)
 const getchatAccountwiselist = async (req, res) => {
   try {
