@@ -148,11 +148,61 @@ const checkTemplateNameExists = async (req, res) => {
     return res.status(500).json({ exists: false, message: 'Server error' });
   }
 };
+
+// Duplicate Organizer Template
+const duplicateOrganizerTemplate = async (req, res) => {
+  try {
+    const { id } = req.params; // templateId passed in URL
+
+    // Find the original template
+    const templateToDuplicate = await OrganizerTemplate.findById(id);
+    if (!templateToDuplicate) {
+      return res.status(404).json({ error: "Template not found" });
+    }
+
+    // Convert to plain object and remove _id + timestamps
+    const templateObj = templateToDuplicate.toObject();
+    delete templateObj._id;
+    delete templateObj.createdAt;
+    delete templateObj.updatedAt;
+
+    // Generate new name (e.g. "Template (Copy)" / "Template (Copy 2)")
+    let newName = `${templateToDuplicate.templatename} (Copy)`;
+    const existingCopies = await OrganizerTemplate.countDocuments({
+      templatename: new RegExp(`^${templateToDuplicate.templatename} \\(Copy`, "i"),
+    });
+    if (existingCopies > 0) {
+      newName = `${templateToDuplicate.templatename} (Copy ${existingCopies + 1})`;
+    }
+
+    // Create new template
+    const duplicatedTemplate = await OrganizerTemplate.create({
+      ...templateObj,
+      templatename: newName,
+      sections: templateObj.sections.map(section => ({
+        ...section,
+        id: new Date().getTime().toString() + section.id, // regenerate section id
+      })),
+    });
+
+    return res
+      .status(201)
+      .json({ message: "Organizer Template duplicated successfully", organizerTemplate: duplicatedTemplate });
+
+  } catch (error) {
+    console.error("Error duplicating OrganizerTemplate:", error);
+    return res.status(500).json({
+      error: "Error duplicating OrganizerTemplate",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrganizerTemplate,
   getOrganizerTemplate,
   getOrganizerTemplates,
   deleteOrganizerTemplate,
   updateOrganizerTemplate,
-  checkTemplateNameExists
+  checkTemplateNameExists,duplicateOrganizerTemplate
 }

@@ -124,6 +124,7 @@ exports.AutomationsMails = async (req, res) => {
         const nextQuarter = Math.floor((nextDay.getMonth() + 3) / 3); // Calculate the quarter
         const nextYear = nextDay.getFullYear();
         for (const contact of validContacts) {
+          console.log("contacts",contact)
           try {
             // Generate email body and subject
             const mailBody = replacePlaceholders(emailbody, {
@@ -134,10 +135,10 @@ exports.AutomationsMails = async (req, res) => {
               LAST_NAME: contact.lastName,
               CONTACT_NAME: contact.contactName,
               COMPANY_NAME: contact.companyName,
-              COUNTRY: contact.country,
+              COUNTRY: contact.country?.name,
               STREET_ADDRESS: contact.streetAddress,
               STATEPROVINCE: contact.state,
-              PHONE_NUMBER: contact.phoneNumbers,
+              PHONE_NUMBER: contact.phoneNumbers?.[0].phone,
               ZIPPOSTALCODE: contact.postalCode,
               CITY: contact.city,
 
@@ -175,7 +176,7 @@ exports.AutomationsMails = async (req, res) => {
               LAST_NAME: contact.lastName,
               CONTACT_NAME: contact.contactName,
               COMPANY_NAME: contact.companyName,
-              COUNTRY: contact.country,
+              COUNTRY: contact.country?.name,
               STREET_ADDRESS: contact.streetAddress,
               STATEPROVINCE: contact.state,
               PHONE_NUMBER: contact.phoneNumbers,

@@ -676,35 +676,35 @@ const getPendingOrganizersByAccountId = async (req, res) => {
 };
 
 //update a new OrganizerTemplate
-// const updateOrganizerAccountWise = async (req, res) => {
-//   const { id } = req.params;
+const updateOrganizer = async (req, res) => {
+  const { id } = req.params;
 
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(404).json({ error: "Invalid TaskTemplate ID" });
-//   }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ error: "Invalid TaskTemplate ID" });
+  }
 
-//   try {
-//     const updatedOrganizerAccountWise =
-//       await OrganizerAccountWise.findOneAndUpdate(
-//         { _id: id },
-//         { ...req.body },
-//         { new: true }
-//       );
+  try {
+    const updatedOrganizerAccountWise =
+      await OrganizerAccountWise.findOneAndUpdate(
+        { _id: id },
+        { ...req.body },
+        { new: true }
+      );
 
-//     if (!updatedOrganizerAccountWise) {
-//       return res.status(404).json({ error: "No such OrganizerAccountWise" });
-//     }
+    if (!updatedOrganizerAccountWise) {
+      return res.status(404).json({ error: "No such OrganizerAccountWise" });
+    }
 
-//     res
-//       .status(200)
-//       .json({
-//         message: "Organizer AccountWise Updated successfully",
-//         updatedOrganizerAccountWise,
-//       });
-//   } catch (error) {
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
+    res
+      .status(200)
+      .json({
+        message: "Organizer AccountWise Updated successfully",
+        updatedOrganizerAccountWise,
+      });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
 
 const updateOrganizerAccountWise = async (req, res) => {
   const { id } = req.params;
@@ -1041,5 +1041,5 @@ module.exports = {
   updateOrganizerAccountWiseStatus,
   getActiveOrganizerByAccountId,getPendingOrganizersByAccountId,
   updateFormElementActiveStatus,
-  updateOrganizerAndNotify,autoSaveOrganizer
+  updateOrganizerAndNotify,autoSaveOrganizer,updateOrganizer
 };
