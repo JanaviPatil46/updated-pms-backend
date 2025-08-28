@@ -176,6 +176,92 @@ const User = require('../models/User');
 
 
 // login with refreshtoken and fetch email list
+// router.get('/login-with-token/:email', async (req, res) => {
+//   try {
+//     const user = await User.findOne({ email: req.params.email });
+//     if (!user) return res.status(404).json({ message: 'User not found' });
+
+//     const oAuth2Client = new google.auth.OAuth2(
+//       process.env.CLIENT_ID,
+//       process.env.CLIENT_SECRET,
+//       process.env.REDIRECT_URI
+//     );
+
+//     oAuth2Client.setCredentials({ refresh_token: user.refresh_token });
+
+//     const { token } = await oAuth2Client.getAccessToken();
+
+//     user.access_token = token;
+//     user.expiry_date = Date.now() + 3600 * 1000;
+//     await user.save();
+
+//     oAuth2Client.setCredentials({ access_token: token });
+
+//     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+
+//     //  Get profile
+//     const profile = await gmail.users.getProfile({ userId: 'me' });
+
+//     //  Get list of messages from inbox
+//     const messageListResponse = await gmail.users.messages.list({
+//       userId: 'me',
+//       labelIds: ['INBOX'],
+//       maxResults: 100, // adjust as needed
+//     });
+
+//     const messages = messageListResponse.data.messages || [];
+
+//     //  Fetch subject/snippet for each message
+//     const messageDetails = await Promise.all(
+//       messages.map(async (msg) => {
+//         const fullMsg = await gmail.users.messages.get({
+//           userId: 'me',
+//           id: msg.id,
+//           // format: 'metadata',
+//           format: 'full',
+//           metadataHeaders: ['Subject', 'From'],
+//         });
+
+//         const headers = fullMsg.data.payload.headers;
+//         const subject = headers.find(h => h.name === 'Subject')?.value || '(No Subject)';
+//         const from = headers.find(h => h.name === 'From')?.value || '(No Sender)';
+
+//          //  Extract body
+//     let body = '';
+
+//     const getBodyFromPayload = (payload) => {
+//       if (payload.parts) {
+//         for (const part of payload.parts) {
+//           if (part.mimeType === 'text/plain' && part.body?.data) {
+//             return Buffer.from(part.body.data, 'base64').toString('utf-8');
+//           }
+//         }
+//       } else if (payload.body?.data) {
+//         return Buffer.from(payload.body.data, 'base64').toString('utf-8');
+//       }
+//       return '';
+//     };
+
+//     body = getBodyFromPayload(fullMsg.data.payload);
+//         return {
+//           id: msg.id,
+//           subject,
+//           from,
+//            body,
+//         };
+//       })
+//     );
+
+//     return res.json({
+//       profile: profile.data,
+//       emails: messageDetails,
+//     });
+//   } catch (err) {
+//     console.error('Error in token login route:', err);
+//     return res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
 router.get('/login-with-token/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
@@ -187,75 +273,80 @@ router.get('/login-with-token/:email', async (req, res) => {
       process.env.REDIRECT_URI
     );
 
+    // Set the stored refresh token
     oAuth2Client.setCredentials({ refresh_token: user.refresh_token });
 
-    const { token } = await oAuth2Client.getAccessToken();
+    let accessToken;
+    try {
+      // Try to get a new access token
+      const { token } = await oAuth2Client.getAccessToken();
+      accessToken = token;
+    } catch (err) {
+      if (err.response?.data?.error === 'invalid_grant') {
+        // Refresh token expired or revoked
+        return res.status(401).json({
+          message: 'Refresh token expired or revoked. Please login again.',
+        });
+      } else {
+        throw err; // other errors
+      }
+    }
 
-    user.access_token = token;
-    user.expiry_date = Date.now() + 3600 * 1000;
+    // Save new access token and expiry
+    user.access_token = accessToken;
+    user.expiry_date = Date.now() + 3600 * 1000; // 1 hour
     await user.save();
 
-    oAuth2Client.setCredentials({ access_token: token });
+    oAuth2Client.setCredentials({ access_token: accessToken });
 
     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-    //  Get profile
+    // Get profile
     const profile = await gmail.users.getProfile({ userId: 'me' });
 
-    //  Get list of messages from inbox
+    // Get list of messages from inbox
     const messageListResponse = await gmail.users.messages.list({
       userId: 'me',
       labelIds: ['INBOX'],
-      maxResults: 100, // adjust as needed
+      maxResults: 100,
     });
 
     const messages = messageListResponse.data.messages || [];
 
-    //  Fetch subject/snippet for each message
+    // Fetch subject/snippet for each message
     const messageDetails = await Promise.all(
       messages.map(async (msg) => {
         const fullMsg = await gmail.users.messages.get({
           userId: 'me',
           id: msg.id,
-          // format: 'metadata',
           format: 'full',
-          metadataHeaders: ['Subject', 'From'],
         });
 
         const headers = fullMsg.data.payload.headers;
         const subject = headers.find(h => h.name === 'Subject')?.value || '(No Subject)';
         const from = headers.find(h => h.name === 'From')?.value || '(No Sender)';
 
-         //  Extract body
-    let body = '';
-
-    const getBodyFromPayload = (payload) => {
-      if (payload.parts) {
-        for (const part of payload.parts) {
-          if (part.mimeType === 'text/plain' && part.body?.data) {
-            return Buffer.from(part.body.data, 'base64').toString('utf-8');
+        // Extract body
+        const getBodyFromPayload = (payload) => {
+          if (payload.parts) {
+            for (const part of payload.parts) {
+              if (part.mimeType === 'text/plain' && part.body?.data) {
+                return Buffer.from(part.body.data, 'base64').toString('utf-8');
+              }
+            }
+          } else if (payload.body?.data) {
+            return Buffer.from(payload.body.data, 'base64').toString('utf-8');
           }
-        }
-      } else if (payload.body?.data) {
-        return Buffer.from(payload.body.data, 'base64').toString('utf-8');
-      }
-      return '';
-    };
-
-    body = getBodyFromPayload(fullMsg.data.payload);
-        return {
-          id: msg.id,
-          subject,
-          from,
-           body,
+          return '';
         };
+
+        const body = getBodyFromPayload(fullMsg.data.payload);
+
+        return { id: msg.id, subject, from, body };
       })
     );
 
-    return res.json({
-      profile: profile.data,
-      emails: messageDetails,
-    });
+    return res.json({ profile: profile.data, emails: messageDetails });
   } catch (err) {
     console.error('Error in token login route:', err);
     return res.status(500).json({ error: 'Internal server error' });

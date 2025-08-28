@@ -1766,16 +1766,16 @@ const getJobListbyid = async (req, res) => {
       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
     const pipeline = await Pipeline.findById(jobs.pipeline);
 
-    let stageNames = null;
+    let stageData  = null;
 
     if (Array.isArray(jobs.stageid)) {
-      stageNames = [];
+      stageData  = [];
       for (const stageId of jobs.stageid) {
         const matchedStage = pipeline.stages.find((stage) =>
           stage._id.equals(stageId)
         );
         if (matchedStage) {
-          stageNames.push({ name: matchedStage.name, _id: matchedStage._id });
+          stageData .push({ name: matchedStage.name, _id: matchedStage._id , automations: matchedStage.automations || [],});
         }
       }
     } else {
@@ -1783,7 +1783,7 @@ const getJobListbyid = async (req, res) => {
         stage._id.equals(jobs.stageid)
       );
       if (matchedStage) {
-        stageNames = [{ name: matchedStage.name, _id: matchedStage._id }];
+        stageData  = [{ name: matchedStage.name, _id: matchedStage._id, automations: matchedStage.automations || [], }];
       }
     }
 
@@ -1795,7 +1795,7 @@ const getJobListbyid = async (req, res) => {
         _id: pipeline._id,
         Name: pipeline.pipelineName,
       },
-      Stage: stageNames,
+      Stage: stageData ,
       Account: jobs.accounts,
       StartDate: jobs.startdate,
       DueDate: jobs.enddate,
@@ -1813,7 +1813,7 @@ const getJobListbyid = async (req, res) => {
       updatedAt: jobs.updatedAt,
     };
 
-    res.status(200).json({ message: "Job retrieved successfully", jobList });
+    res.status(200).json({ message: "Job by id retrieved successfully", jobList });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
