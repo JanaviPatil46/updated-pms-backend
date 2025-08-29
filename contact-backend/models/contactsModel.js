@@ -60,7 +60,10 @@ const contactSchema = new mongoose.Schema({
         // required: true
     }],
 
-
+ userid:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
     country: {
         name: {
             type: String,

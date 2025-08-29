@@ -70,89 +70,6 @@ const getJobs = async (req, res) => {
   }
 };
 
-// Get Jobs by Account ID
-// const getJobsByAccount = async (req, res) => {
-//   try {
-//     // Extract accountId from the request parameters or query
-//     const { accountId } = req.params; // or req.query if passed in query string
-    
-//     // Find jobs where the accountId exists in the "accounts" array
-//     const jobs = await Job.find({ accounts: accountId }).populate({
-//       path: "pipeline",
-//       model: "pipeline",
-      
-//     });
-
-//     if (jobs.length === 0) {
-//       return res.status(404).json({ message: "No jobs found for this account" });
-//     }
-
-//     res.status(200).json({ message: "Jobs retrieved successfully", jobs });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-
-// const getJobsByAccount = async (req, res) => {
-//   try {
-//     const { accountId } = req.params;
-//     const accountIdsArray = accountId.split(",");
-
-//     // Fetch jobs where the accountId exists in the "accounts" array
-//     const jobs = await Job.find({ accounts: { $in: accountIdsArray } })
-//       .populate({ path: "pipeline", model: "pipeline" })
-//       .populate({ path: "accounts", model: "Accounts" });
-
-//     const jobList = [];
-
-//     for (const job of jobs) {
-//       const accountsname = job.accounts.map((account) => account.accountName);
-//       const accountId = job.accounts.map((account) => account._id);
-
-//       // Fetch account and associated contacts
-//       const account = await Accounts.findById(accountId).populate("contacts");
-//       const validContacts = account.contacts.filter((contact) => contact.login);
-
-//       if (validContacts.length === 0) {
-//         return res.status(400).json({ status: 400, message: "No contacts with login enabled." });
-//       }
-
-//       // Select the first valid contact
-//       const contact = validContacts[0];
-
-//       // Data for placeholder replacement
-//       const placeholderData = {
-//         ACCOUNT_NAME: accountsname.join(", "),
-//         FIRST_NAME: contact.firstName,
-//         MIDDLE_NAME: contact.middleName,
-//         LAST_NAME: contact.lastName,
-//         CONTACT_NAME: contact.contactName,
-//         COMPANY_NAME: contact.companyName,
-//         COUNTRY: contact.country,
-//         STREET_ADDRESS: contact.streetAddress,
-//         STATEPROVINCE: contact.state,
-//         PHONE_NUMBER: contact.phoneNumbers,
-//         ZIPPOSTALCODE: contact.postalCode,
-//         CITY: contact.city,
-//       };
-
-//       // Replace placeholders in jobname
-//       const jobName = replacePlaceholders(job.jobname, placeholderData);
-
-//       jobList.push({
-//         id: job._id,
-//         Name: jobName,
-//         Pipeline: job.pipeline?.pipelineName || null,
-//         Accounts: accountsname,
-//       });
-//     }
-
-//     res.status(200).json({ message: "Jobs retrieved successfully", jobList });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 
 const getJobsByAccount = async (req, res) => {
   try {
@@ -365,25 +282,6 @@ const createJob = async (req, res) => {
   }
 };
 
-//delete a JobTemplate
-
-// const deleteJob = async (req, res) => {
-//   const { id } = req.params;
-
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(404).json({ error: "Invalid Job ID" });
-//   }
-
-//   try {
-//     const deletedJob = await Job.findByIdAndDelete({ _id: id });
-//     if (!deletedJob) {
-//       return res.status(404).json({ error: "No such Job" });
-//     }
-//     res.status(200).json({ message: "Job deleted successfully", deletedJob });
-//   } catch (error) {
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
 
 const deleteJob = async (req, res) => {
   const { id } = req.params;
@@ -591,344 +489,7 @@ const getJobList = async (req, res) => {
   }
 };
 
-// const getActiveJobList = async (req, res) => {
-//   try {
-//     const { isActive } = req.params;
-//     const jobs = await Job.find({ active: isActive })
-//       .populate({ path: "accounts", model: "Accounts" })
-//       .populate({
-//         path: "pipeline",
-//         model: "pipeline",
-//         populate: { path: "stages", model: "stage" },
-//       })
-//       .populate({ path: "jobassignees", model: "User" })
-//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
-//     const jobList = [];
 
-//     for (const job of jobs) {
-//       // Fetching the pipeline document for each job
-//       const pipeline = await Pipeline.findById(job.pipeline);
-
-//       if (!pipeline) {
-//         // If pipeline is not found, skip this job
-//         continue;
-//       }
-
-//       const jobAssigneeNames = job.jobassignees.map(
-//         (assignee) => assignee.username
-//       );
-
-//       const accountsname = job.accounts.map((account) => account.accountName);
-//       const accountId = job.accounts.map((account) => account._id);
-
-//       // Fetch account and associated contacts
-//       const account = await Accounts.findById(
-//         accountId
-//       ).populate("contacts");
-
-//       const validContacts = account.contacts.filter((contact) => contact.login);
-//       if (validContacts.length === 0) {
-//         return res
-//           .status(400)
-//           .json({
-//             status: 400,
-//             message: "No contacts with login enabled.",
-//           });
-//       }
-//       let stageNames = null;
-
-//       if (Array.isArray(job.stageid)) {
-//         // Iterate over each stage ID and find the corresponding stage name
-//         stageNames = [];
-//         for (const stageId of job.stageid) {
-//           const matchedStage = pipeline.stages.find((stage) =>
-//             stage._id.equals(stageId)
-//           );
-//           if (matchedStage) {
-//             stageNames.push(matchedStage.name);
-//           }
-//         }
-//       } else {
-//         // If job.stageid is not an array, convert it to an array containing a single element
-//         const matchedStage = pipeline.stages.find((stage) =>
-//           stage._id.equals(job.stageid)
-//         );
-//         if (matchedStage) {
-//           stageNames = [matchedStage.name];
-//         }
-//       }
-//       const clientFacingStatus = job.clientfacingstatus
-//         ? {
-//             statusId: job.clientfacingstatus._id,
-//             statusName: job.clientfacingstatus.clientfacingName,
-//             statusColor: job.clientfacingstatus.clientfacingColour,
-//             // description: job.clientfacingstatus.description,
-//             // Include other fields from clientfacingstatus as needed
-//           }
-//         : null;
-//         const emailPromises = validContacts.map(async (contactId) => {
-//           const contact = await Contacts.findById(contactId);
-//           const placeholderData = {
-//             ACCOUNT_NAME: accountsname.join(", "),
-//             FIRST_NAME: contact.firstName,
-//             MIDDLE_NAME: contact.middleName,
-//             LAST_NAME: contact.lastName,
-//             CONTACT_NAME: contact.contactName,
-//             COMPANY_NAME: contact.companyName,
-//             COUNTRY: contact.country,
-//             STREET_ADDRESS: contact.streetAddress,
-//             STATEPROVINCE: contact.state,
-//             PHONE_NUMBER: contact.phoneNumbers,
-//             ZIPPOSTALCODE: contact.postalCode,
-//             CITY: contact.city,
-//             CURRENT_DAY_FULL_DATE: currentFullDate,
-//             CURRENT_DAY_NUMBER: currentDayNumber,
-//             CURRENT_DAY_NAME: currentDayName,
-//             CURRENT_WEEK: currentWeek,
-//             CURRENT_MONTH_NUMBER: currentMonthNumber,
-//             CURRENT_MONTH_NAME: currentMonthName,
-//             CURRENT_QUARTER: currentQuarter,
-//             CURRENT_YEAR: currentYear,
-//             LAST_DAY_FULL_DATE: lastDayFullDate,
-//             LAST_DAY_NUMBER: lastDayNumber,
-//             LAST_DAY_NAME: lastDayName,
-//             LAST_WEEK: lastWeek,
-//             LAST_MONTH_NUMBER: lastMonthNumber,
-//             LAST_MONTH_NAME: lastMonthName,
-//             LAST_QUARTER: lastQuarter,
-//             LAST_YEAR: lastYear,
-//             NEXT_DAY_FULL_DATE: nextDayFullDate,
-//             NEXT_DAY_NUMBER: nextDayNumber,
-//             NEXT_DAY_NAME: nextDayName,
-//             NEXT_WEEK: nextWeek,
-//             NEXT_MONTH_NUMBER: nextMonthNumber,
-//             NEXT_MONTH_NAME: nextMonthName,
-//             NEXT_QUARTER: nextQuarter,
-//             NEXT_YEAR: nextYear,
-//           };
-    
-//           // Replace placeholders in jobname and description
-//           const jobName = replacePlaceholders(job.jobname, placeholderData);
-//           const jobDescription = replacePlaceholders(
-//             job.description,
-//             placeholderData
-//           );
-    
-//           jobList.push({
-//             id: job._id,
-//             Name: jobName,
-//             JobAssignee: jobAssigneeNames,
-//             Pipeline: pipeline ? pipeline.pipelineName : null,
-//             Stage: stageNames,
-//             Account: accountsname,
-//             AccountId: accountId,
-//             ClientFacingStatus: clientFacingStatus,
-//             StartDate: job.startdate,
-//             DueDate: job.enddate,
-//             Priority: job.priority,
-//             Description: jobDescription,
-//             StartsIn: job.startsin
-//               ? `${job.startsin} ${job.startsinduration}`
-//               : null,
-//             DueIn: jobs.duein ? `${jobs.duein} ${jobs.dueinduration}` : null,
-//             createdAt: job.createdAt,
-//             updatedAt: job.updatedAt,
-//           });
-//         })
-//       // Data for placeholder replacement
-//       await Promise.all(emailPromises);
-//     }
-   
-//     res
-//       .status(200)
-//       .json({ message: "JobTemplate retrieved successfully", jobList });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-
-
-
-// const getActiveJobList = async (req, res) => {
-//   try {
-//     const { isActive } = req.params;
-//     const jobs = await Job.find({ active: isActive })
-//       .populate({ path: "accounts", model: "Accounts" })
-//       .populate({
-//         path: "pipeline",
-//         model: "pipeline",
-//         populate: { path: "stages", model: "stage" },
-//       })
-//       .populate({ path: "jobassignees", model: "User" })
-//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" }).sort({ createdAt: -1 });
-//     const jobList = [];
-
-//     for (const job of jobs) {
-//       const pipeline = await Pipeline.findById(job.pipeline);
-//       if (!pipeline) continue;
-
-//       const jobAssigneeNames = job.jobassignees.map(
-//         (assignee) => assignee.username
-//       );
-
-//       const accountsname = job.accounts.map((account) => account.accountName);
-//       const accountId = job.accounts.map((account) => account._id);
-
-//       const account = await Accounts.findById(accountId).populate("contacts");
-
-//       const validContacts = account.contacts.filter((contact) => contact.login);
-
-//       let stageNames = null;
-//       if (Array.isArray(job.stageid)) {
-//         stageNames = job.stageid
-//           .map((stageId) =>
-//             pipeline.stages.find((stage) => stage._id.equals(stageId))
-//           )
-//           .filter(Boolean)
-//           .map((stage) => stage.name);
-//       } else {
-//         const matchedStage = pipeline.stages.find((stage) =>
-//           stage._id.equals(job.stageid)
-//         );
-//         stageNames = matchedStage ? [matchedStage.name] : null;
-//       }
-
-//       const clientFacingStatus = job.clientfacingstatus
-//         ? {
-//             statusId: job.clientfacingstatus._id,
-//             statusName: job.clientfacingstatus.clientfacingName,
-//             statusColor: job.clientfacingstatus.clientfacingColour,
-//           }
-//         : null;
-
-//       const commonPlaceholders = {
-//         ACCOUNT_NAME: accountsname.join(", "),
-//         CURRENT_DAY_FULL_DATE: currentFullDate,
-//         CURRENT_DAY_NUMBER: currentDayNumber,
-//         CURRENT_DAY_NAME: currentDayName,
-//         CURRENT_WEEK: currentWeek,
-//         CURRENT_MONTH_NUMBER: currentMonthNumber,
-//         CURRENT_MONTH_NAME: currentMonthName,
-//         CURRENT_QUARTER: currentQuarter,
-//         CURRENT_YEAR: currentYear,
-//         LAST_DAY_FULL_DATE: lastDayFullDate,
-//         LAST_DAY_NUMBER: lastDayNumber,
-//         LAST_DAY_NAME: lastDayName,
-//         LAST_WEEK: lastWeek,
-//         LAST_MONTH_NUMBER: lastMonthNumber,
-//         LAST_MONTH_NAME: lastMonthName,
-//         LAST_QUARTER: lastQuarter,
-//         LAST_YEAR: lastYear,
-//         NEXT_DAY_FULL_DATE: nextDayFullDate,
-//         NEXT_DAY_NUMBER: nextDayNumber,
-//         NEXT_DAY_NAME: nextDayName,
-//         NEXT_WEEK: nextWeek,
-//         NEXT_MONTH_NUMBER: nextMonthNumber,
-//         NEXT_MONTH_NAME: nextMonthName,
-//         NEXT_QUARTER: nextQuarter,
-//         NEXT_YEAR: nextYear,
-//       };
-
-//       if (validContacts.length > 0) {
-//         const emailPromises = validContacts.map(async (contactId) => {
-//           const contact = await Contacts.findById(contactId);
-//           const placeholderData = {
-//             ...commonPlaceholders,
-//             FIRST_NAME: contact.firstName || "",
-//             MIDDLE_NAME: contact.middleName || "",
-//             LAST_NAME: contact.lastName || "",
-//             CONTACT_NAME: contact.contactName || "",
-//             COMPANY_NAME: contact.companyName || "",
-//             COUNTRY: contact.country || "",
-//             STREET_ADDRESS: contact.streetAddress || "",
-//             STATEPROVINCE: contact.state || "",
-//             PHONE_NUMBER: contact.phoneNumbers || "",
-//             ZIPPOSTALCODE: contact.postalCode || "",
-//             CITY: contact.city || "",
-//           };
-
-//           const jobName = replacePlaceholders(job.jobname, placeholderData);
-//           const jobDescription = replacePlaceholders(
-//             job.description,
-//             placeholderData
-//           );
-
-//           jobList.push({
-//             id: job._id,
-//             Name: jobName,
-//             JobAssignee: jobAssigneeNames,
-//             Pipeline: pipeline ? pipeline.pipelineName : null,
-//             Stage: stageNames,
-//             Account: accountsname,
-//             AccountId: accountId,
-//             ClientFacingStatus: clientFacingStatus,
-//             StartDate: job.startdate,
-//             DueDate: job.enddate,
-//             Priority: job.priority,
-//             Description: jobDescription,
-//             StartsIn: job.startsin
-//               ? `${job.startsin} ${job.startsinduration}`
-//               : null,
-//             DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
-//             createdAt: job.createdAt,
-//             updatedAt: job.updatedAt,
-//           });
-//         });
-//         await Promise.all(emailPromises);
-//       } else {
-//         // Push job with non-contact placeholders only
-//         const placeholderData = {
-//           ...commonPlaceholders,
-//           FIRST_NAME: "",
-//           MIDDLE_NAME: "",
-//           LAST_NAME: "",
-//           CONTACT_NAME: "",
-//           COMPANY_NAME: "",
-//           COUNTRY: "",
-//           STREET_ADDRESS: "",
-//           STATEPROVINCE: "",
-//           PHONE_NUMBER: "",
-//           ZIPPOSTALCODE: "",
-//           CITY: "",
-//         };
-
-//         const jobName = replacePlaceholders(job.jobname, placeholderData);
-//         const jobDescription = replacePlaceholders(
-//           job.description,
-//           placeholderData
-//         );
-
-//         jobList.push({
-//           id: job._id,
-//           Name: jobName,
-//           JobAssignee: jobAssigneeNames,
-//           Pipeline: pipeline ? pipeline.pipelineName : null,
-//           Stage: stageNames,
-//           Account: accountsname,
-//           AccountId: accountId,
-//           ClientFacingStatus: clientFacingStatus,
-//           StartDate: job.startdate,
-//           DueDate: job.enddate,
-//           Priority: job.priority,
-//           Description: jobDescription,
-//           StartsIn: job.startsin
-//             ? `${job.startsin} ${job.startsinduration}`
-//             : null,
-//           DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
-//           createdAt: job.createdAt,
-//           updatedAt: job.updatedAt,
-//         });
-//       }
-//     }
-
-//     res
-//       .status(200)
-//       .json({ message: "JobTemplate retrieved successfully", jobList });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 
 const getActiveJobList = async (req, res) => {
   try {
@@ -1213,6 +774,326 @@ const getActiveJobListByUserid = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+const getActiveJobListbyAccountId = async (req, res) => {
+  try {
+    const { isActive, accountid } = req.params;
+
+     // Convert accountid string into an array
+     const accountIdsArray = accountid.split(",");
+
+    // Fetch jobs filtered by isActive and accountid
+    const jobs = await Job.find({ active: isActive,  accounts: { $in: accountIdsArray }, })
+      .populate({ path: "accounts", model: "Accounts" })
+      .populate({
+        path: "pipeline",
+        model: "pipeline",
+        populate: { path: "stages", model: "Stage" },
+      })
+      .populate({ path: "jobassignees", model: "User" })
+      .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
+
+    const jobList = [];
+
+    for (const job of jobs) {
+      // Extract pipeline and stages
+      const pipeline = job.pipeline;
+     
+ // Get all stage details (not just names)
+      const stageDetails = Array.isArray(job.stageid)
+        ? job.stageid
+            .map((stageId) => {
+              const matchedStage = pipeline?.stages?.find((stage) =>
+                stage._id.equals(stageId)
+              );
+              return matchedStage ? matchedStage : null;
+            })
+            .filter(Boolean)
+        : job.stageid
+        ? [
+            pipeline?.stages?.find((stage) => stage._id.equals(job.stageid)) || null
+          ]
+        : null;
+      // Extract job assignee names and account names
+      const jobAssigneeNames = job.jobassignees.map(
+        (assignee) => assignee.username
+      );
+      const accountsname = job.accounts.map((account) => account.accountName);
+      const accountId = job.accounts.map((account) => account._id);
+
+      // Fetch account and associated contacts
+      const account = await Accounts.findById(accountId).populate("contacts");
+      const validContacts = account.contacts.filter((contact) => contact.login);
+
+      if (validContacts.length === 0) {
+        return res
+          .status(400)
+          .json({ status: 400, message: "No contacts with login enabled." });
+      }
+
+      // Select the first valid contact (to prevent duplication)
+      const contact = validContacts[0];
+
+      // Extract client-facing status
+      const clientFacingStatus = job.clientfacingstatus
+        ? {
+            statusId: job.clientfacingstatus._id,
+            statusName: job.clientfacingstatus.clientfacingName,
+            statusColor: job.clientfacingstatus.clientfacingColour,
+          }
+        : null;
+
+      // Data for placeholder replacement
+      const placeholderData = {
+        ACCOUNT_NAME: accountsname.join(", "),
+        FIRST_NAME: contact.firstName,
+        MIDDLE_NAME: contact.middleName,
+        LAST_NAME: contact.lastName,
+        CONTACT_NAME: contact.contactName,
+        COMPANY_NAME: contact.companyName,
+        COUNTRY: contact.country,
+        STREET_ADDRESS: contact.streetAddress,
+        STATEPROVINCE: contact.state,
+        PHONE_NUMBER: contact.phoneNumbers,
+        ZIPPOSTALCODE: contact.postalCode,
+        CITY: contact.city,
+        CURRENT_DAY_FULL_DATE: currentFullDate,
+        CURRENT_DAY_NUMBER: currentDayNumber,
+        CURRENT_DAY_NAME: currentDayName,
+        CURRENT_WEEK: currentWeek,
+        CURRENT_MONTH_NUMBER: currentMonthNumber,
+        CURRENT_MONTH_NAME: currentMonthName,
+        CURRENT_QUARTER: currentQuarter,
+        CURRENT_YEAR: currentYear,
+        LAST_DAY_FULL_DATE: lastDayFullDate,
+        LAST_DAY_NUMBER: lastDayNumber,
+        LAST_DAY_NAME: lastDayName,
+        LAST_WEEK: lastWeek,
+        LAST_MONTH_NUMBER: lastMonthNumber,
+        LAST_MONTH_NAME: lastMonthName,
+        LAST_QUARTER: lastQuarter,
+        LAST_YEAR: lastYear,
+        NEXT_DAY_FULL_DATE: nextDayFullDate,
+        NEXT_DAY_NUMBER: nextDayNumber,
+        NEXT_DAY_NAME: nextDayName,
+        NEXT_WEEK: nextWeek,
+        NEXT_MONTH_NUMBER: nextMonthNumber,
+        NEXT_MONTH_NAME: nextMonthName,
+        NEXT_QUARTER: nextQuarter,
+        NEXT_YEAR: nextYear,
+      };
+
+      // Replace placeholders in jobname and description
+      const jobName = replacePlaceholders(job.jobname, placeholderData);
+      const jobDescription = replacePlaceholders(job.description, placeholderData);
+
+      // Push only one job per loop
+      jobList.push({
+        id: job._id,
+        Name: jobName,
+        JobAssignee: jobAssigneeNames,
+        Pipeline: pipeline?.pipelineName || null,
+        PipelineId: pipeline?._id,
+        // Stage: stageNames,
+        Stages: stageDetails,
+        Account: accountsname,
+        AccountId: accountId,
+        visibilityForClient:job.showinclientportal,
+        ClientFacingStatus: clientFacingStatus,
+        StartDate: job.startdate,
+        DueDate: job.enddate,
+        Priority: job.priority,
+        Description: jobDescription,
+        StartsIn: job.startsin ? `${job.startsin} ${job.startsinduration}` : null,
+        DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+      });
+    }
+
+    res.status(200).json({ message: "JobTemplate retrieved successfully", jobList });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getJobListbyid = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const jobs = await Job.findById(id)
+      .populate({
+        path: "accounts",
+        model: "Accounts",
+        populate: {
+          path: "tags",
+          model: "Tags",
+        },
+      })
+      .populate({
+        path: "pipeline",
+        model: "pipeline",
+        populate: { path: "stages", model: "stage" },
+      })
+      .populate({ path: "jobassignees", model: "User" })
+      .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
+    const pipeline = await Pipeline.findById(jobs.pipeline);
+
+    let stageData  = null;
+
+    if (Array.isArray(jobs.stageid)) {
+      stageData  = [];
+      for (const stageId of jobs.stageid) {
+        const matchedStage = pipeline.stages.find((stage) =>
+          stage._id.equals(stageId)
+        );
+        if (matchedStage) {
+          stageData .push({ name: matchedStage.name, _id: matchedStage._id , automations: matchedStage.automations || [],});
+        }
+      }
+    } else {
+      const matchedStage = pipeline.stages.find((stage) =>
+        stage._id.equals(jobs.stageid)
+      );
+      if (matchedStage) {
+        stageData  = [{ name: matchedStage.name, _id: matchedStage._id, automations: matchedStage.automations || [], }];
+      }
+    }
+
+    const jobList = {
+      id: jobs._id,
+      Name: jobs.jobname,
+      JobAssignee: jobs.jobassignees,
+      Pipeline: {
+        _id: pipeline._id,
+        Name: pipeline.pipelineName,
+      },
+      Stage: stageData ,
+      Account: jobs.accounts,
+      StartDate: jobs.startdate,
+      DueDate: jobs.enddate,
+      StartsIn: jobs.startsin
+        ? `${jobs.startsin} ${jobs.startsinduration}`
+        : null,
+      DueIn: jobs.duein ? `${jobs.duein} ${jobs.dueinduration}` : null,
+      Priority: jobs.priority,
+      ClientFacingStatus: jobs.clientfacingstatus,
+      ClientFacingDecription: jobs.clientfacingDescription,
+      jobClientName: jobs.jobnameforclient,
+      ShowinClientPortal: jobs.showinclientportal,
+      Description: jobs.description,
+      createdAt: jobs.createdAt,
+      updatedAt: jobs.updatedAt,
+    };
+
+    res.status(200).json({ message: "Job by id retrieved successfully", jobList });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updatestgeidtojob = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ error: "Invalid Job ID" });
+  }
+
+  try {
+    const updatedJob = await Job.findOneAndUpdate(
+      { _id: id },
+      { ...req.body },
+      { new: true }
+    );
+
+    if (!updatedJob) {
+      return res.status(404).json({ error: "No such Job" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Stage Id Updated successfully", updatedJob });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+const getPipelinesFromJobList = async (req, res) => {
+  try {
+    const { userid, isActive } = req.params;
+    const jobs = await Job.find({ jobassignees: userid, active: isActive })
+      .populate({ path: "pipeline", model: "pipeline" })
+      .sort({ createdAt: -1 });
+
+    const pipeline = jobs.reduce((acc, job) => {
+      if (job.pipeline && !acc.some((p) => p.id.equals(job.pipeline._id))) {
+        acc.push({
+          _id: job.pipeline._id,
+          pipelineName: job.pipeline.pipelineName,
+        });
+      }
+      return acc;
+    }, []);
+
+    res.status(200).json({ message: "Pipelines retrieved successfully", pipeline });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteJobsByAccount = async (req, res) => {
+  try {
+    const { accountId } = req.params;
+    const accountIdsArray = accountId.split(",");
+
+    // Find jobs with any of the provided account IDs in the "accounts" array
+    const jobsToDelete = await Job.find({ accounts: { $in: accountIdsArray } });
+
+    if (jobsToDelete.length === 0) {
+      return res.status(404).json({ message: "No jobs found for the given account ID(s)." });
+    }
+
+    // Delete the matching jobs
+    const deleteResult = await Job.deleteMany({ accounts: { $in: accountIdsArray } });
+
+    res.status(200).json({
+      message: "Jobs deleted successfully",
+      deletedJob: deleteResult,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  getActiveJobCount ,
+  getInactiveJobCount  ,
+  getJobsCount,
+  createJob,
+  getJobs,
+  getJob,
+  deleteJob,
+  updateJob,
+  getJobList,
+  getJobListbyid,
+  updatestgeidtojob,
+  getActiveJobList,
+  getActiveJobListbyAccountId,
+  getActiveJobListByUserid,
+  getPipelinesFromJobList,
+  getJobsByAccount,deleteJobsByAccount
+};
+
+
+
+
+
+
+
+
+
+
+
 
 // const getActiveJobList = async (req, res) => {
 //   try {
@@ -1603,309 +1484,445 @@ const getActiveJobListByUserid = async (req, res) => {
 //   }
 // };
 
-const getActiveJobListbyAccountId = async (req, res) => {
-  try {
-    const { isActive, accountid } = req.params;
+//delete a JobTemplate
 
-     // Convert accountid string into an array
-     const accountIdsArray = accountid.split(",");
+// const deleteJob = async (req, res) => {
+//   const { id } = req.params;
 
-    // Fetch jobs filtered by isActive and accountid
-    const jobs = await Job.find({ active: isActive,  accounts: { $in: accountIdsArray }, })
-      .populate({ path: "accounts", model: "Accounts" })
-      .populate({
-        path: "pipeline",
-        model: "pipeline",
-        populate: { path: "stages", model: "Stage" },
-      })
-      .populate({ path: "jobassignees", model: "User" })
-      .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid Job ID" });
+//   }
 
-    const jobList = [];
+//   try {
+//     const deletedJob = await Job.findByIdAndDelete({ _id: id });
+//     if (!deletedJob) {
+//       return res.status(404).json({ error: "No such Job" });
+//     }
+//     res.status(200).json({ message: "Job deleted successfully", deletedJob });
+//   } catch (error) {
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
 
-    for (const job of jobs) {
-      // Extract pipeline and stages
-      const pipeline = job.pipeline;
-     
- // Get all stage details (not just names)
-      const stageDetails = Array.isArray(job.stageid)
-        ? job.stageid
-            .map((stageId) => {
-              const matchedStage = pipeline?.stages?.find((stage) =>
-                stage._id.equals(stageId)
-              );
-              return matchedStage ? matchedStage : null;
-            })
-            .filter(Boolean)
-        : job.stageid
-        ? [
-            pipeline?.stages?.find((stage) => stage._id.equals(job.stageid)) || null
-          ]
-        : null;
-      // Extract job assignee names and account names
-      const jobAssigneeNames = job.jobassignees.map(
-        (assignee) => assignee.username
-      );
-      const accountsname = job.accounts.map((account) => account.accountName);
-      const accountId = job.accounts.map((account) => account._id);
+// const getActiveJobList = async (req, res) => {
+//   try {
+//     const { isActive } = req.params;
+//     const jobs = await Job.find({ active: isActive })
+//       .populate({ path: "accounts", model: "Accounts" })
+//       .populate({
+//         path: "pipeline",
+//         model: "pipeline",
+//         populate: { path: "stages", model: "stage" },
+//       })
+//       .populate({ path: "jobassignees", model: "User" })
+//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
+//     const jobList = [];
 
-      // Fetch account and associated contacts
-      const account = await Accounts.findById(accountId).populate("contacts");
-      const validContacts = account.contacts.filter((contact) => contact.login);
+//     for (const job of jobs) {
+//       // Fetching the pipeline document for each job
+//       const pipeline = await Pipeline.findById(job.pipeline);
 
-      if (validContacts.length === 0) {
-        return res
-          .status(400)
-          .json({ status: 400, message: "No contacts with login enabled." });
-      }
+//       if (!pipeline) {
+//         // If pipeline is not found, skip this job
+//         continue;
+//       }
 
-      // Select the first valid contact (to prevent duplication)
-      const contact = validContacts[0];
+//       const jobAssigneeNames = job.jobassignees.map(
+//         (assignee) => assignee.username
+//       );
 
-      // Extract client-facing status
-      const clientFacingStatus = job.clientfacingstatus
-        ? {
-            statusId: job.clientfacingstatus._id,
-            statusName: job.clientfacingstatus.clientfacingName,
-            statusColor: job.clientfacingstatus.clientfacingColour,
-          }
-        : null;
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountId = job.accounts.map((account) => account._id);
 
-      // Data for placeholder replacement
-      const placeholderData = {
-        ACCOUNT_NAME: accountsname.join(", "),
-        FIRST_NAME: contact.firstName,
-        MIDDLE_NAME: contact.middleName,
-        LAST_NAME: contact.lastName,
-        CONTACT_NAME: contact.contactName,
-        COMPANY_NAME: contact.companyName,
-        COUNTRY: contact.country,
-        STREET_ADDRESS: contact.streetAddress,
-        STATEPROVINCE: contact.state,
-        PHONE_NUMBER: contact.phoneNumbers,
-        ZIPPOSTALCODE: contact.postalCode,
-        CITY: contact.city,
-        CURRENT_DAY_FULL_DATE: currentFullDate,
-        CURRENT_DAY_NUMBER: currentDayNumber,
-        CURRENT_DAY_NAME: currentDayName,
-        CURRENT_WEEK: currentWeek,
-        CURRENT_MONTH_NUMBER: currentMonthNumber,
-        CURRENT_MONTH_NAME: currentMonthName,
-        CURRENT_QUARTER: currentQuarter,
-        CURRENT_YEAR: currentYear,
-        LAST_DAY_FULL_DATE: lastDayFullDate,
-        LAST_DAY_NUMBER: lastDayNumber,
-        LAST_DAY_NAME: lastDayName,
-        LAST_WEEK: lastWeek,
-        LAST_MONTH_NUMBER: lastMonthNumber,
-        LAST_MONTH_NAME: lastMonthName,
-        LAST_QUARTER: lastQuarter,
-        LAST_YEAR: lastYear,
-        NEXT_DAY_FULL_DATE: nextDayFullDate,
-        NEXT_DAY_NUMBER: nextDayNumber,
-        NEXT_DAY_NAME: nextDayName,
-        NEXT_WEEK: nextWeek,
-        NEXT_MONTH_NUMBER: nextMonthNumber,
-        NEXT_MONTH_NAME: nextMonthName,
-        NEXT_QUARTER: nextQuarter,
-        NEXT_YEAR: nextYear,
-      };
+//       // Fetch account and associated contacts
+//       const account = await Accounts.findById(
+//         accountId
+//       ).populate("contacts");
 
-      // Replace placeholders in jobname and description
-      const jobName = replacePlaceholders(job.jobname, placeholderData);
-      const jobDescription = replacePlaceholders(job.description, placeholderData);
+//       const validContacts = account.contacts.filter((contact) => contact.login);
+//       if (validContacts.length === 0) {
+//         return res
+//           .status(400)
+//           .json({
+//             status: 400,
+//             message: "No contacts with login enabled.",
+//           });
+//       }
+//       let stageNames = null;
 
-      // Push only one job per loop
-      jobList.push({
-        id: job._id,
-        Name: jobName,
-        JobAssignee: jobAssigneeNames,
-        Pipeline: pipeline?.pipelineName || null,
-        PipelineId: pipeline?._id,
-        // Stage: stageNames,
-        Stages: stageDetails,
-        Account: accountsname,
-        AccountId: accountId,
-        visibilityForClient:job.showinclientportal,
-        ClientFacingStatus: clientFacingStatus,
-        StartDate: job.startdate,
-        DueDate: job.enddate,
-        Priority: job.priority,
-        Description: jobDescription,
-        StartsIn: job.startsin ? `${job.startsin} ${job.startsinduration}` : null,
-        DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-      });
-    }
+//       if (Array.isArray(job.stageid)) {
+//         // Iterate over each stage ID and find the corresponding stage name
+//         stageNames = [];
+//         for (const stageId of job.stageid) {
+//           const matchedStage = pipeline.stages.find((stage) =>
+//             stage._id.equals(stageId)
+//           );
+//           if (matchedStage) {
+//             stageNames.push(matchedStage.name);
+//           }
+//         }
+//       } else {
+//         // If job.stageid is not an array, convert it to an array containing a single element
+//         const matchedStage = pipeline.stages.find((stage) =>
+//           stage._id.equals(job.stageid)
+//         );
+//         if (matchedStage) {
+//           stageNames = [matchedStage.name];
+//         }
+//       }
+//       const clientFacingStatus = job.clientfacingstatus
+//         ? {
+//             statusId: job.clientfacingstatus._id,
+//             statusName: job.clientfacingstatus.clientfacingName,
+//             statusColor: job.clientfacingstatus.clientfacingColour,
+//             // description: job.clientfacingstatus.description,
+//             // Include other fields from clientfacingstatus as needed
+//           }
+//         : null;
+//         const emailPromises = validContacts.map(async (contactId) => {
+//           const contact = await Contacts.findById(contactId);
+//           const placeholderData = {
+//             ACCOUNT_NAME: accountsname.join(", "),
+//             FIRST_NAME: contact.firstName,
+//             MIDDLE_NAME: contact.middleName,
+//             LAST_NAME: contact.lastName,
+//             CONTACT_NAME: contact.contactName,
+//             COMPANY_NAME: contact.companyName,
+//             COUNTRY: contact.country,
+//             STREET_ADDRESS: contact.streetAddress,
+//             STATEPROVINCE: contact.state,
+//             PHONE_NUMBER: contact.phoneNumbers,
+//             ZIPPOSTALCODE: contact.postalCode,
+//             CITY: contact.city,
+//             CURRENT_DAY_FULL_DATE: currentFullDate,
+//             CURRENT_DAY_NUMBER: currentDayNumber,
+//             CURRENT_DAY_NAME: currentDayName,
+//             CURRENT_WEEK: currentWeek,
+//             CURRENT_MONTH_NUMBER: currentMonthNumber,
+//             CURRENT_MONTH_NAME: currentMonthName,
+//             CURRENT_QUARTER: currentQuarter,
+//             CURRENT_YEAR: currentYear,
+//             LAST_DAY_FULL_DATE: lastDayFullDate,
+//             LAST_DAY_NUMBER: lastDayNumber,
+//             LAST_DAY_NAME: lastDayName,
+//             LAST_WEEK: lastWeek,
+//             LAST_MONTH_NUMBER: lastMonthNumber,
+//             LAST_MONTH_NAME: lastMonthName,
+//             LAST_QUARTER: lastQuarter,
+//             LAST_YEAR: lastYear,
+//             NEXT_DAY_FULL_DATE: nextDayFullDate,
+//             NEXT_DAY_NUMBER: nextDayNumber,
+//             NEXT_DAY_NAME: nextDayName,
+//             NEXT_WEEK: nextWeek,
+//             NEXT_MONTH_NUMBER: nextMonthNumber,
+//             NEXT_MONTH_NAME: nextMonthName,
+//             NEXT_QUARTER: nextQuarter,
+//             NEXT_YEAR: nextYear,
+//           };
+    
+//           // Replace placeholders in jobname and description
+//           const jobName = replacePlaceholders(job.jobname, placeholderData);
+//           const jobDescription = replacePlaceholders(
+//             job.description,
+//             placeholderData
+//           );
+    
+//           jobList.push({
+//             id: job._id,
+//             Name: jobName,
+//             JobAssignee: jobAssigneeNames,
+//             Pipeline: pipeline ? pipeline.pipelineName : null,
+//             Stage: stageNames,
+//             Account: accountsname,
+//             AccountId: accountId,
+//             ClientFacingStatus: clientFacingStatus,
+//             StartDate: job.startdate,
+//             DueDate: job.enddate,
+//             Priority: job.priority,
+//             Description: jobDescription,
+//             StartsIn: job.startsin
+//               ? `${job.startsin} ${job.startsinduration}`
+//               : null,
+//             DueIn: jobs.duein ? `${jobs.duein} ${jobs.dueinduration}` : null,
+//             createdAt: job.createdAt,
+//             updatedAt: job.updatedAt,
+//           });
+//         })
+//       // Data for placeholder replacement
+//       await Promise.all(emailPromises);
+//     }
+   
+//     res
+//       .status(200)
+//       .json({ message: "JobTemplate retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-    res.status(200).json({ message: "JobTemplate retrieved successfully", jobList });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
-const getJobListbyid = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const jobs = await Job.findById(id)
-      .populate({
-        path: "accounts",
-        model: "Accounts",
-        populate: {
-          path: "tags",
-          model: "Tags",
-        },
-      })
-      .populate({
-        path: "pipeline",
-        model: "pipeline",
-        populate: { path: "stages", model: "stage" },
-      })
-      .populate({ path: "jobassignees", model: "User" })
-      .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" });
-    const pipeline = await Pipeline.findById(jobs.pipeline);
 
-    let stageData  = null;
 
-    if (Array.isArray(jobs.stageid)) {
-      stageData  = [];
-      for (const stageId of jobs.stageid) {
-        const matchedStage = pipeline.stages.find((stage) =>
-          stage._id.equals(stageId)
-        );
-        if (matchedStage) {
-          stageData .push({ name: matchedStage.name, _id: matchedStage._id , automations: matchedStage.automations || [],});
-        }
-      }
-    } else {
-      const matchedStage = pipeline.stages.find((stage) =>
-        stage._id.equals(jobs.stageid)
-      );
-      if (matchedStage) {
-        stageData  = [{ name: matchedStage.name, _id: matchedStage._id, automations: matchedStage.automations || [], }];
-      }
-    }
+// const getActiveJobList = async (req, res) => {
+//   try {
+//     const { isActive } = req.params;
+//     const jobs = await Job.find({ active: isActive })
+//       .populate({ path: "accounts", model: "Accounts" })
+//       .populate({
+//         path: "pipeline",
+//         model: "pipeline",
+//         populate: { path: "stages", model: "stage" },
+//       })
+//       .populate({ path: "jobassignees", model: "User" })
+//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" }).sort({ createdAt: -1 });
+//     const jobList = [];
 
-    const jobList = {
-      id: jobs._id,
-      Name: jobs.jobname,
-      JobAssignee: jobs.jobassignees,
-      Pipeline: {
-        _id: pipeline._id,
-        Name: pipeline.pipelineName,
-      },
-      Stage: stageData ,
-      Account: jobs.accounts,
-      StartDate: jobs.startdate,
-      DueDate: jobs.enddate,
-      StartsIn: jobs.startsin
-        ? `${jobs.startsin} ${jobs.startsinduration}`
-        : null,
-      DueIn: jobs.duein ? `${jobs.duein} ${jobs.dueinduration}` : null,
-      Priority: jobs.priority,
-      ClientFacingStatus: jobs.clientfacingstatus,
-      ClientFacingDecription: jobs.clientfacingDescription,
-      jobClientName: jobs.jobnameforclient,
-      ShowinClientPortal: jobs.showinclientportal,
-      Description: jobs.description,
-      createdAt: jobs.createdAt,
-      updatedAt: jobs.updatedAt,
-    };
+//     for (const job of jobs) {
+//       const pipeline = await Pipeline.findById(job.pipeline);
+//       if (!pipeline) continue;
 
-    res.status(200).json({ message: "Job by id retrieved successfully", jobList });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//       const jobAssigneeNames = job.jobassignees.map(
+//         (assignee) => assignee.username
+//       );
 
-const updatestgeidtojob = async (req, res) => {
-  const { id } = req.params;
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountId = job.accounts.map((account) => account._id);
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ error: "Invalid Job ID" });
-  }
+//       const account = await Accounts.findById(accountId).populate("contacts");
 
-  try {
-    const updatedJob = await Job.findOneAndUpdate(
-      { _id: id },
-      { ...req.body },
-      { new: true }
-    );
+//       const validContacts = account.contacts.filter((contact) => contact.login);
 
-    if (!updatedJob) {
-      return res.status(404).json({ error: "No such Job" });
-    }
+//       let stageNames = null;
+//       if (Array.isArray(job.stageid)) {
+//         stageNames = job.stageid
+//           .map((stageId) =>
+//             pipeline.stages.find((stage) => stage._id.equals(stageId))
+//           )
+//           .filter(Boolean)
+//           .map((stage) => stage.name);
+//       } else {
+//         const matchedStage = pipeline.stages.find((stage) =>
+//           stage._id.equals(job.stageid)
+//         );
+//         stageNames = matchedStage ? [matchedStage.name] : null;
+//       }
 
-    res
-      .status(200)
-      .json({ message: "Stage Id Updated successfully", updatedJob });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-};
-const getPipelinesFromJobList = async (req, res) => {
-  try {
-    const { userid, isActive } = req.params;
-    const jobs = await Job.find({ jobassignees: userid, active: isActive })
-      .populate({ path: "pipeline", model: "pipeline" })
-      .sort({ createdAt: -1 });
+//       const clientFacingStatus = job.clientfacingstatus
+//         ? {
+//             statusId: job.clientfacingstatus._id,
+//             statusName: job.clientfacingstatus.clientfacingName,
+//             statusColor: job.clientfacingstatus.clientfacingColour,
+//           }
+//         : null;
 
-    const pipeline = jobs.reduce((acc, job) => {
-      if (job.pipeline && !acc.some((p) => p.id.equals(job.pipeline._id))) {
-        acc.push({
-          _id: job.pipeline._id,
-          pipelineName: job.pipeline.pipelineName,
-        });
-      }
-      return acc;
-    }, []);
+//       const commonPlaceholders = {
+//         ACCOUNT_NAME: accountsname.join(", "),
+//         CURRENT_DAY_FULL_DATE: currentFullDate,
+//         CURRENT_DAY_NUMBER: currentDayNumber,
+//         CURRENT_DAY_NAME: currentDayName,
+//         CURRENT_WEEK: currentWeek,
+//         CURRENT_MONTH_NUMBER: currentMonthNumber,
+//         CURRENT_MONTH_NAME: currentMonthName,
+//         CURRENT_QUARTER: currentQuarter,
+//         CURRENT_YEAR: currentYear,
+//         LAST_DAY_FULL_DATE: lastDayFullDate,
+//         LAST_DAY_NUMBER: lastDayNumber,
+//         LAST_DAY_NAME: lastDayName,
+//         LAST_WEEK: lastWeek,
+//         LAST_MONTH_NUMBER: lastMonthNumber,
+//         LAST_MONTH_NAME: lastMonthName,
+//         LAST_QUARTER: lastQuarter,
+//         LAST_YEAR: lastYear,
+//         NEXT_DAY_FULL_DATE: nextDayFullDate,
+//         NEXT_DAY_NUMBER: nextDayNumber,
+//         NEXT_DAY_NAME: nextDayName,
+//         NEXT_WEEK: nextWeek,
+//         NEXT_MONTH_NUMBER: nextMonthNumber,
+//         NEXT_MONTH_NAME: nextMonthName,
+//         NEXT_QUARTER: nextQuarter,
+//         NEXT_YEAR: nextYear,
+//       };
 
-    res.status(200).json({ message: "Pipelines retrieved successfully", pipeline });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//       if (validContacts.length > 0) {
+//         const emailPromises = validContacts.map(async (contactId) => {
+//           const contact = await Contacts.findById(contactId);
+//           const placeholderData = {
+//             ...commonPlaceholders,
+//             FIRST_NAME: contact.firstName || "",
+//             MIDDLE_NAME: contact.middleName || "",
+//             LAST_NAME: contact.lastName || "",
+//             CONTACT_NAME: contact.contactName || "",
+//             COMPANY_NAME: contact.companyName || "",
+//             COUNTRY: contact.country || "",
+//             STREET_ADDRESS: contact.streetAddress || "",
+//             STATEPROVINCE: contact.state || "",
+//             PHONE_NUMBER: contact.phoneNumbers || "",
+//             ZIPPOSTALCODE: contact.postalCode || "",
+//             CITY: contact.city || "",
+//           };
 
-const deleteJobsByAccount = async (req, res) => {
-  try {
-    const { accountId } = req.params;
-    const accountIdsArray = accountId.split(",");
+//           const jobName = replacePlaceholders(job.jobname, placeholderData);
+//           const jobDescription = replacePlaceholders(
+//             job.description,
+//             placeholderData
+//           );
 
-    // Find jobs with any of the provided account IDs in the "accounts" array
-    const jobsToDelete = await Job.find({ accounts: { $in: accountIdsArray } });
+//           jobList.push({
+//             id: job._id,
+//             Name: jobName,
+//             JobAssignee: jobAssigneeNames,
+//             Pipeline: pipeline ? pipeline.pipelineName : null,
+//             Stage: stageNames,
+//             Account: accountsname,
+//             AccountId: accountId,
+//             ClientFacingStatus: clientFacingStatus,
+//             StartDate: job.startdate,
+//             DueDate: job.enddate,
+//             Priority: job.priority,
+//             Description: jobDescription,
+//             StartsIn: job.startsin
+//               ? `${job.startsin} ${job.startsinduration}`
+//               : null,
+//             DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
+//             createdAt: job.createdAt,
+//             updatedAt: job.updatedAt,
+//           });
+//         });
+//         await Promise.all(emailPromises);
+//       } else {
+//         // Push job with non-contact placeholders only
+//         const placeholderData = {
+//           ...commonPlaceholders,
+//           FIRST_NAME: "",
+//           MIDDLE_NAME: "",
+//           LAST_NAME: "",
+//           CONTACT_NAME: "",
+//           COMPANY_NAME: "",
+//           COUNTRY: "",
+//           STREET_ADDRESS: "",
+//           STATEPROVINCE: "",
+//           PHONE_NUMBER: "",
+//           ZIPPOSTALCODE: "",
+//           CITY: "",
+//         };
 
-    if (jobsToDelete.length === 0) {
-      return res.status(404).json({ message: "No jobs found for the given account ID(s)." });
-    }
+//         const jobName = replacePlaceholders(job.jobname, placeholderData);
+//         const jobDescription = replacePlaceholders(
+//           job.description,
+//           placeholderData
+//         );
 
-    // Delete the matching jobs
-    const deleteResult = await Job.deleteMany({ accounts: { $in: accountIdsArray } });
+//         jobList.push({
+//           id: job._id,
+//           Name: jobName,
+//           JobAssignee: jobAssigneeNames,
+//           Pipeline: pipeline ? pipeline.pipelineName : null,
+//           Stage: stageNames,
+//           Account: accountsname,
+//           AccountId: accountId,
+//           ClientFacingStatus: clientFacingStatus,
+//           StartDate: job.startdate,
+//           DueDate: job.enddate,
+//           Priority: job.priority,
+//           Description: jobDescription,
+//           StartsIn: job.startsin
+//             ? `${job.startsin} ${job.startsinduration}`
+//             : null,
+//           DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
+//           createdAt: job.createdAt,
+//           updatedAt: job.updatedAt,
+//         });
+//       }
+//     }
 
-    res.status(200).json({
-      message: "Jobs deleted successfully",
-      deletedJob: deleteResult,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     res
+//       .status(200)
+//       .json({ message: "JobTemplate retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-module.exports = {
-  getActiveJobCount ,
-  getInactiveJobCount  ,
-  getJobsCount,
-  createJob,
-  getJobs,
-  getJob,
-  deleteJob,
-  updateJob,
-  getJobList,
-  getJobListbyid,
-  updatestgeidtojob,
-  getActiveJobList,
-  getActiveJobListbyAccountId,
-  getActiveJobListByUserid,
-  getPipelinesFromJobList,
-  getJobsByAccount,deleteJobsByAccount
-};
+// Get Jobs by Account ID
+// const getJobsByAccount = async (req, res) => {
+//   try {
+//     // Extract accountId from the request parameters or query
+//     const { accountId } = req.params; // or req.query if passed in query string
+    
+//     // Find jobs where the accountId exists in the "accounts" array
+//     const jobs = await Job.find({ accounts: accountId }).populate({
+//       path: "pipeline",
+//       model: "pipeline",
+      
+//     });
+
+//     if (jobs.length === 0) {
+//       return res.status(404).json({ message: "No jobs found for this account" });
+//     }
+
+//     res.status(200).json({ message: "Jobs retrieved successfully", jobs });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
+// const getJobsByAccount = async (req, res) => {
+//   try {
+//     const { accountId } = req.params;
+//     const accountIdsArray = accountId.split(",");
+
+//     // Fetch jobs where the accountId exists in the "accounts" array
+//     const jobs = await Job.find({ accounts: { $in: accountIdsArray } })
+//       .populate({ path: "pipeline", model: "pipeline" })
+//       .populate({ path: "accounts", model: "Accounts" });
+
+//     const jobList = [];
+
+//     for (const job of jobs) {
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountId = job.accounts.map((account) => account._id);
+
+//       // Fetch account and associated contacts
+//       const account = await Accounts.findById(accountId).populate("contacts");
+//       const validContacts = account.contacts.filter((contact) => contact.login);
+
+//       if (validContacts.length === 0) {
+//         return res.status(400).json({ status: 400, message: "No contacts with login enabled." });
+//       }
+
+//       // Select the first valid contact
+//       const contact = validContacts[0];
+
+//       // Data for placeholder replacement
+//       const placeholderData = {
+//         ACCOUNT_NAME: accountsname.join(", "),
+//         FIRST_NAME: contact.firstName,
+//         MIDDLE_NAME: contact.middleName,
+//         LAST_NAME: contact.lastName,
+//         CONTACT_NAME: contact.contactName,
+//         COMPANY_NAME: contact.companyName,
+//         COUNTRY: contact.country,
+//         STREET_ADDRESS: contact.streetAddress,
+//         STATEPROVINCE: contact.state,
+//         PHONE_NUMBER: contact.phoneNumbers,
+//         ZIPPOSTALCODE: contact.postalCode,
+//         CITY: contact.city,
+//       };
+
+//       // Replace placeholders in jobname
+//       const jobName = replacePlaceholders(job.jobname, placeholderData);
+
+//       jobList.push({
+//         id: job._id,
+//         Name: jobName,
+//         Pipeline: job.pipeline?.pipelineName || null,
+//         Accounts: accountsname,
+//       });
+//     }
+
+//     res.status(200).json({ message: "Jobs retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };

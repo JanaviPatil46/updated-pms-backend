@@ -86,14 +86,27 @@ const userSchema = new mongoose.Schema(
 
     emailSyncEmail:{
       type:String
-    }
+    },
+    login: {
+        type: Boolean,
+    //    default : false
+    },
+    notify: {
+        type: Boolean,
+        // default : false
+    },
+    emailSync: {
+        type: Boolean,
+        // default : false
+    },
   },
   { timestamps: true }
 );
 
 //!static signup method
 userSchema.statics.signup = async function (data) {
-  const { username, email, password, role } = data;
+  // const { username, email, password, role } = data;
+  const {username, email, password, role, login, notify, emailSync} =data
 
   //todo validation all fields required
 
@@ -113,7 +126,8 @@ userSchema.statics.signup = async function (data) {
   const salt = await bcrypt.genSalt(10);
   const hash1 = await bcrypt.hash(password, salt);
 
-  const user = await this.create({ username, email, password: hash1, cpassword: hash1, role });
+  const user = await this.create({ username, email, password: hash1, cpassword: hash1, role,login,notify,emailSync });
+  console.log("user",user)
   return user;
 };
 userSchema.statics.login = async function ({ email, username, password }) {
@@ -129,32 +143,7 @@ userSchema.statics.login = async function ({ email, username, password }) {
 
   return user;
 };
-//!static login method
-// userSchema.statics.login = async function (data) {
-//   const { email, password } = data;
 
-//   if (!email || !password) {
-//     throw Error("all fields required ");
-//   }
 
-//   const user = await this.findOne({ email });
-//   if (!user) {
-//     throw Error("invalid user Id ");
-//   }
-
-//   const auth = await bcrypt.compare(password, user.password);
-//   if (!auth) {
-//     throw Error("invalid password ");
-//   }
-
-//   return user;
-// };
 
 module.exports = mongoose.model("User", userSchema);
-
-//todo username uniq
-// const exists = await this.findOne({ username });
-
-// if (exists) {
-//     throw Error("username allready exists ");
-// }

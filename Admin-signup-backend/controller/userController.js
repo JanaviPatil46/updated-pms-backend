@@ -247,11 +247,11 @@ const fs = require('fs');
 // const { use } = require("../middlewares/clientsignupOTPmail");
 
 const adminSignup = async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password, role,login,notify,emailSync } = req.body;
   console.log("console",req.body);
 
   try {
-    const user = await User.signup({ username, email, password, role });
+    const user = await User.signup({ username, email, password, role,login,notify,emailSync  });
     res.status(200).json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -296,9 +296,9 @@ const createUser = async (req, res) => {
     role,
     access,
     loginStatus,
-    active,
+    active,login,notify,emailSync
   } = req.body;
-  console.log(req.body);
+  console.log("new user data",req.body);
 
   try {
     const user = await User.create({
@@ -309,9 +309,10 @@ const createUser = async (req, res) => {
       role,
       access,
       loginStatus,
-      active,
+      active,login,notify,emailSync
     });
     res.status(200).json(user);
+console.log("created user",user);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -420,19 +421,58 @@ const updateUserPasswordwithoutAut = async (req, res) => {
   }
 };
 
-const getUserByEmail = async (req, res) => {
-  const { email } = req.params;
-  try {
-    // Find the User by email
-    const user = await User.find({ email });
+// const getUserByEmail = async (req, res) => {
+//   const { email } = req.params;
+//   try {
+//     // Find the User by email
+//     const user = await User.find({ email });
 
-    if (user.length === 0) {
-      return res.status(200).json({ error: "No such User", user });
+//     if (user.length === 0) {
+//       return res.status(200).json({ error: "No such User", user });
+//     }
+
+//     res.status(200).json({ message: "User retrieved successfully", user });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+const Account = require("../models/AccountModel");
+const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    // Find all users with this email
+    const users = await User.find({ email });
+
+    if (!users.length) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ message: "User retrieved successfully", user });
+    // Get userIds
+    const userIds = users.map(u => u._id);
+
+    // Find all accounts where userid includes one of these users
+    const accounts = await Account.find({ userid: { $in: userIds } })
+      .select("accountName userid");
+
+    // Map accounts to users
+    const usersWithAccounts = users.map(user => {
+      const account = accounts.find(acc =>
+        acc.userid.some(id => id.toString() === user._id.toString())
+      );
+      return {
+        ...user.toObject(),
+        // accountName: account ? account.accountName : null
+ accountId: account ? account._id : null,
+        accountName: account ? account.accountName : null
+      };
+    });
+
+    res.json({ user: usersWithAccounts });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

@@ -259,7 +259,10 @@ const getAccountbyIdAll = async (req, res) => {
     return res.status(404).json({ error: "Invalid Account ID" });
   }
   try {
-    const account = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts" }).populate({path:"foldertemplate", model:"FolderTemplate"});
+    const account = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts", populate: {
+          path: "userid",   // 👈 populate userid inside each contact
+          model: "User"
+        } }).populate({path:"foldertemplate", model:"FolderTemplate"});
 
     if (!account) {
       return res.status(404).json({ error: "No such Account" });
@@ -318,6 +321,31 @@ const deleteAccount = async (req, res) => {
 //     }
 // };
 
+// const updateAccount = async (req, res) => {
+//   const { id } = req.params;
+
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid Account ID" });
+//   }
+
+//   try {
+//     // Extract data from the request body
+//     const { clientType, accountName, tags, teamMember, companyName, country, streetAddress, city, state, postalCode, contacts, userid,active } = req.body;
+
+//     // Find and update the account information
+//     const updatedAccount = await Accounts.findOneAndUpdate({ _id: id }, { clientType, companyName,accountName, tags, teamMember, contacts,userid,country, streetAddress, city, state, postalCode, active }, { new: true });
+
+//     if (!updatedAccount) {
+//       return res.status(404).json({ error: "No such Account" });
+//     }
+
+    
+
+//     res.status(200).json({ message: "Account Updated successfully", updatedAccount });
+//   } catch (error) {
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
 const updateAccount = async (req, res) => {
   const { id } = req.params;
 
@@ -326,45 +354,66 @@ const updateAccount = async (req, res) => {
   }
 
   try {
-    // Extract data from the request body
-    const { clientType, accountName, tags, teamMember, companyName, country, streetAddress, city, state, postalCode, contacts, userid,active } = req.body;
+    const {
+      clientType,
+      accountName,
+      tags,
+      teamMember,
+      companyName,
+      country,
+      streetAddress,
+      city,
+      state,
+      postalCode,
+      contacts,
+      userid, // single id or array of ids
+      active,
+    } = req.body;
 
-    // Find and update the account information
-    const updatedAccount = await Accounts.findOneAndUpdate({ _id: id }, { clientType, companyName,accountName, tags, teamMember, contacts,userid,country, streetAddress, city, state, postalCode, active }, { new: true });
+    // Build update object
+    const updateData = {
+      clientType,
+      accountName,
+      companyName,
+      tags,
+      teamMember,
+      contacts,
+      country,
+      streetAddress,
+      city,
+      state,
+      postalCode,
+      active,
+    };
+
+    let updatedAccount;
+
+    if (userid) {
+      // 👉 If userid is provided, push into array instead of overwriting
+      updatedAccount = await Accounts.findOneAndUpdate(
+        { _id: id },
+        {
+          $set: updateData,
+          $addToSet: { userid: { $each: Array.isArray(userid) ? userid : [userid] } },
+        },
+        { new: true }
+      );
+    } else {
+      updatedAccount = await Accounts.findOneAndUpdate(
+        { _id: id },
+        { $set: updateData },
+        { new: true }
+      );
+    }
 
     if (!updatedAccount) {
       return res.status(404).json({ error: "No such Account" });
     }
 
-    // If the client type is "Company", update the associated company address
-    // if (clientType === "Company") {
-    //   if (!updatedAccount.companyAddress) {
-    //     return res.status(404).json({ error: "Company Address not found for this account" });
-    //   }
-
-    //   const updatedCompanyAddress = await companyAddress.findOneAndUpdate(
-    //     { _id: updatedAccount.companyAddress },
-    //     {
-    //       companyName,
-    //       country,
-    //       streetAddress,
-    //       city,
-    //       state,
-    //       postalCode,
-    //     },
-    //     { new: true }
-    //   );
-
-    //   if (!updatedCompanyAddress) {
-    //     return res.status(404).json({ error: "Failed to update company address" });
-    //   }
-
-    //   // Update the company address reference in the account, if needed (if not already existing)
-    //   updatedAccount.companyAddress = updatedCompanyAddress._id;
-    //   await updatedAccount.save();
-    // }
-
-    res.status(200).json({ message: "Account Updated successfully", updatedAccount });
+    res.status(200).json({
+      message: "Account Updated successfully",
+      updatedAccount,
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -406,7 +455,10 @@ const getAccountsList = async (req, res) => {
 const getAccountsListById = async (req, res) => {
   const { id } = req.params;
   try {
-    const accounts = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts" });
+    const accounts = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts",populate: {
+          path: "userid",   // 👈 populate userid inside each contact
+          model: "User"
+        } });
 
     const accountlist = {
       id: accounts._id,

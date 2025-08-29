@@ -71,7 +71,7 @@
 const User = require("../models/userModel");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-
+const bcrypt =require("bcrypt")
 const secretKey = process.env.TOKEN_KEY;
 
 //todo Handle admin login
@@ -133,16 +133,65 @@ const adminLogin = async (req, res) => {
 //     return res.status(404).json({ error: error.message });
 //   }
 // };
+// const generatetoken = async (req, res) => {
+//   const { email, username, password, expiryTime } = req.body;
+//   console.log("Login request:", req.body);
+
+//   try {
+//     // Find user with both email and username
+//     const user = await User.login({ email, username, password });
+
+//     if (!user) {
+//       return res.status(422).json({ error: "Invalid details" });
+//     }
+
+//     // Default to 8 hours if expiryTime is not valid
+//     const expiresIn = typeof expiryTime === "number" ? expiryTime : 28800;
+
+//     const payload = {
+//       id: user._id,
+//       role: user.role,
+//     };
+
+//     jwt.sign(payload, secretKey, { expiresIn }, (err, token) => {
+//       if (err) {
+//         return res.status(500).json({ error: "Token generation failed" });
+//       }
+
+//       const result = { token };
+
+//       res.cookie("usercookie", result, {
+//         httpOnly: true,
+//       });
+
+//       return res.status(200).json({ status: 200, result });
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
 const generatetoken = async (req, res) => {
-  const { email, username, password, expiryTime } = req.body;
+  const { email, username, password, expiryTime, userId } = req.body;
   console.log("Login request:", req.body);
 
   try {
-    // Find user with both email and username
-    const user = await User.login({ email, username, password });
+    let user;
 
-    if (!user) {
-      return res.status(422).json({ error: "Invalid details" });
+    if (userId) {
+      // ✅ Prefer userId (safer than just email/username)
+      user = await User.findOne({ _id: userId, email });
+      if (!user) {
+        return res.status(404).json({ error: "User not found for given ID and email" });
+      }
+
+      // verify password manually if not handled in schema
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Invalid password" });
+      }
+    } else {
+      // fallback to existing User.login logic
+      user = await User.login({ email, username, password });
     }
 
     // Default to 8 hours if expiryTime is not valid
@@ -160,15 +209,15 @@ const generatetoken = async (req, res) => {
 
       const result = { token };
 
-      res.cookie("usercookie", result, {
-        httpOnly: true,
-      });
+      res.cookie("usercookie", result, { httpOnly: true });
 
       return res.status(200).json({ status: 200, result });
     });
   } catch (error) {
+    console.error("Login error:", error);
     return res.status(500).json({ error: error.message });
   }
 };
+
 
 module.exports = { adminLogin, generatetoken };
