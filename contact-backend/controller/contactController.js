@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Contacts = require("../models/contactsModel");
 const Tags = require("../models/tagModel");
-
+const Account = require("../models/AccountModel")
 // Get all contacts
 const getAllContacts = async (req, res) => {
   try {
@@ -64,6 +64,26 @@ const createContact = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });
+  }
+};
+
+// Create Contact under an account
+ const createContactAccount = async (req, res) => {
+  try {
+    const { accountId } = req.body;
+    const account = await Account.findById(accountId);
+    if (!account) return res.status(404).json({ error: "Account not found" });
+
+    const contact = new Contacts(req.body);
+    await contact.save();
+
+    // Push into account
+    account.contacts.push(contact._id);
+    await account.save();
+
+    res.status(201).json(contact);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -155,7 +175,7 @@ const getContactsByAccountId = async (req, res) => {
   }
 };
 
-module.exports = {
+module.exports = {createContactAccount,
   createContact,
   getAllContacts,
   getSingleContact,

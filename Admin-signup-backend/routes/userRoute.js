@@ -36,7 +36,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require('../multerConfig');
-const { updateUserPasswordwithoutAut,createUser, getUsers, getUser, deleteUser, updateUser, adminSignup, getUserByEmail, updateUserPassword, updateLoginStatus, getUserListbyId, getUsersByRoles, getVerifyUserbyPassword,uploadProfilePicture } = require("../controller/userController");
+const { createUserFromContact,updateUserPasswordwithoutAut,createUser, getUsers, getUser, deleteUser, updateUser, adminSignup, getUserByEmail, updateUserPassword, updateLoginStatus, getUserListbyId, getUsersByRoles, getVerifyUserbyPassword,uploadProfilePicture } = require("../controller/userController");
 // const { validateToken, logout, cleanupBlacklist } = require("../middleware/authJwt");
 const { validateToken, logout } = require("../middleware/authJwt");
 const { generatetoken } = require("../controller/loginController");
@@ -58,6 +58,7 @@ router.post("/clientlogin/logout", validateToken, logout);
 
 router.post("/login", adminLogin);
 router.post("/login/signup", adminSignup); //It is also for create user
+router.post("/from-contact", createUserFromContact);
 router.get("/user", getUsers);
 router.get("/user/:id", getUser);
 router.post("/user", createUser);

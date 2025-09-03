@@ -1,113 +1,137 @@
-const { mongoose } = require("mongoose");
 
-const contactSchema = new mongoose.Schema(
-  {
+const mongoose = require("mongoose");
+
+
+const contactSchema = new mongoose.Schema({
     firstName: {
-      type: String,
+        type: String
     },
     middleName: {
-      type: String,
+        type: String
     },
     lastName: {
-      type: String,
+        type: String
     },
     contactName: {
-      type: String,
-      required: [true, "Contact name is required"],
+        type: String,
+        // required: [true, 'Contact name is required'],
     },
     companyName: {
-      type: String,
+        type: String
     },
     note: {
-      type: String,
+        type: String
     },
     ssn: {
-      type: Number,
+        type: Number
     },
     email: {
-      type: String,
-      validate: {
-        validator: (value) => /\S+@\S+\.\S+/.test(value),
-        message: "Invalid email format",
-      },
+        // type: String,
+        // validate: {
+        //     validator: (value) => /\S+@\S+\.\S+/.test(value),
+        //     message: 'Invalid email format',
+        // },
+        type: String,
+        // trim: true,
+        validate: {
+            validator: function (value) {
+                // Allow empty email (optional) or validate proper email format
+                return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            },
+            message: "Invalid email format",
+        },
     },
     login: {
-      type: Boolean,
-      //    default : false
+        type: Boolean,
+    //    default : false
     },
     notify: {
-      type: Boolean,
-      // default : false
+        type: Boolean,
+        // default : false
     },
     emailSync: {
-      type: Boolean,
-      // default : false
+        type: Boolean,
+        // default : false
     },
-    tags: [
-      {
+    tags: [{
         type: mongoose.Schema.Types.ObjectId,
-        type: Array,
-        ref: "tag",
+        
+        ref: 'tag',
         // required: true
-      },
-    ],
+    }],
 
-    // country: {
-    //     type: String,
-    //     //  required: [true, 'Country is required'],
-    // },
-
+ userid:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
     country: {
-      name: {
-        type: String,
-        required: true,
-      },
-      code: {
-        type: String,
-        required: true,
-      },
+        name: {
+            type: String,
+      
+        },
+        code: {
+            type: String,
+           
+        }
     },
-
+    
     streetAddress: {
-      type: String,
-      //required: [true, 'Street address is required'],
+        type: String,
+    
     },
     city: {
-      type: String,
-      // required: [true, 'City is required'],
+        type: String,
+      
     },
     state: {
-      type: String,
-      // required: [true, 'State is required'],
+        type: String,
+       
     },
     postalCode: {
-      type: Number,
-      // required: [true, 'Postal code is required'],
+        type: Number,
+       
     },
-    phoneNumbers: [
-      {
-        type: Array,
-      },
-    ],
-
+    phoneNumbers: [{ type: String }],
+// phoneNumbers: [
+//   {
+//     phone: {
+//       type: Number,
+    
+//     },
+//     country: {
+//       type: String,
+      
+//     },
+//     countryCode:{
+//         type:Number
+//     }
+ 
+//   }
+// ],
     accountid: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Accounts",
-      // required: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Accounts',
+      
     },
-
+    
     description: {
-      type: String,
+        type: String
     },
-
+    
     active: {
-      type: Boolean,
-      default: true,
+        type: Boolean,
+        default: true,
     },
-  },
-  { timestamps: true }
-);
 
+}, { timestamps: true })
+
+// Middleware: auto-generate contactName
+contactSchema.pre("save", function (next) {
+  this.contactName = [this.firstName, this.middleName, this.lastName]
+    .filter(Boolean)
+    .join(" ");
+  next();
+});
 // collection
-const Contacts = new mongoose.model("Contacts", contactSchema);
+const Contacts = new mongoose.model("Contacts", contactSchema)
 module.exports = Contacts;

@@ -243,6 +243,7 @@ const mongoose = require("mongoose");
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const path = require('path');
+const Contact = require("../models/contactsModel")
 const fs = require('fs');
 // const { use } = require("../middlewares/clientsignupOTPmail");
 
@@ -258,8 +259,49 @@ const adminSignup = async (req, res) => {
   }
 };
 
+// CREATE user from contact with login=true
+ const createUserFromContact = async (req, res) => {
+  try {
+    const { contactId, password } = req.body;
 
+    const contact = await Contact.findById(contactId);
+    if (!contact) {
+      return res.status(404).json({ message: "Contact not found" });
+    }
 
+    if (!contact.login) {
+      return res.status(400).json({ message: "This contact is not marked as login user" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      username: contact.contactName,
+      email: contact.email,
+      password: hashedPassword,
+      role: "client",
+      login: contact.login,
+      notify: contact.notify,
+      emailSync: contact.emailSync,
+    });
+
+    await newUser.save();
+
+    // 🔹 After creating user → reset login fields in Contact
+    contact.login = false;
+    contact.notify = false;
+    contact.emailSync = false;
+    await contact.save();
+
+    res.status(201).json({
+      message: "User created from contact successfully",
+      user: newUser,
+      updatedContact: contact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating user from contact", error: error.message });
+  }
+};
 //todo SOP api
 //GET all Users
 
@@ -617,7 +659,7 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
-module.exports = {
+module.exports = {createUserFromContact,
   createUser,
   getUsers,
   getUser,

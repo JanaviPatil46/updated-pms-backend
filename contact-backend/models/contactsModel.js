@@ -14,7 +14,7 @@ const contactSchema = new mongoose.Schema({
     },
     contactName: {
         type: String,
-        required: [true, 'Contact name is required'],
+        // required: [true, 'Contact name is required'],
     },
     companyName: {
         type: String
@@ -91,39 +91,29 @@ const contactSchema = new mongoose.Schema({
         type: Number,
        
     },
-    // phoneNumbers: [
-    //     {
-    //         type: Array,
-
-
-    //     }
-    // ],
-phoneNumbers: [
-  {
-    phone: {
-      type: Number,
+    phoneNumbers: [{ type: String }],
+// phoneNumbers: [
+//   {
+//     phone: {
+//       type: Number,
     
-    },
-    country: {
-      type: String,
+//     },
+//     country: {
+//       type: String,
       
-    },
-    countryCode:{
-        type:Number
-    }
+//     },
+//     countryCode:{
+//         type:Number
+//     }
  
-  }
-],
+//   }
+// ],
     accountid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Accounts',
-        // required: true
+      
     },
-    // accountid:[ {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Accounts',
-    //     // required: true
-    // }],
+    
     description: {
         type: String
     },
@@ -135,6 +125,13 @@ phoneNumbers: [
 
 }, { timestamps: true })
 
+// Middleware: auto-generate contactName
+contactSchema.pre("save", function (next) {
+  this.contactName = [this.firstName, this.middleName, this.lastName]
+    .filter(Boolean)
+    .join(" ");
+  next();
+});
 // collection
 const Contacts = new mongoose.model("Contacts", contactSchema)
 module.exports = Contacts;

@@ -13,55 +13,47 @@ const Proposal = require("../models/proposalAccountwiseModel")
 const Chat = require("../models/chatsModel");
 const path = require("path");
 // POST a new account
-const createAccount = async (req, res) => {
+// const createAccount = async (req, res) => {
+//   try {
+//     let newAccount;
+//     // let newCompanyAccount;
+
+//     const { clientType, accountName, tags, teamMember, contacts, description,foldertemplate, userid,companyName, country, streetAddress, city, state, postalCode,adminUserId,active } = req.body;
+
+
+//     // Check for existing account with the same name
+//     const existingAccount = await Accounts.findOne({ accountName });
+//     if (existingAccount) {
+//       return res.status(409).json({ error: "Account name already exists" });
+//     }
+//     newAccount = await Accounts.create({ clientType, accountName, tags, teamMember, contacts, description,foldertemplate,userid,companyName, country, streetAddress, city, state, postalCode,adminUserId,active });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Account created successfully",
+//       newAccount,
+      
+//     });
+//   } catch (error) {
+//     res.status(400).json({ error: error.message });
+//   }
+// };
+
+export const createAccount = async (req, res) => {
   try {
-    let newAccount;
-    // let newCompanyAccount;
-
-    const { clientType, accountName, tags, teamMember, contacts, description,foldertemplate, userid,companyName, country, streetAddress, city, state, postalCode,adminUserId,active } = req.body;
-
-
-    // Check for existing account with the same name
-    const existingAccount = await Accounts.findOne({ accountName });
-    if (existingAccount) {
-      return res.status(409).json({ error: "Account name already exists" });
+     // Check if accountName already exists
+    const existing = await Accounts.findOne({ accountName: req.body.accountName });
+    if (existing) {
+      return res.status(400).json({ error: "Account name is taken" });
     }
-    newAccount = await Accounts.create({ clientType, accountName, tags, teamMember, contacts, description,foldertemplate,userid,companyName, country, streetAddress, city, state, postalCode,adminUserId,active });
-
-
-    // if (clientType === "Company") {
-    //   const { companyName, country, streetAddress, city, state, postalCode,foldertemplate, active } = req.body;
-
-    //   newCompanyAccount = await companyAddress.create({ companyName, country, streetAddress, city, state, postalCode, companyId: newAccount._id,foldertemplate, active });
-
-    //   // Optionally, update the Accounts document to reference the company address
-    //   newAccount.companyAddress = newCompanyAccount._id; // Ensure the Accounts schema includes companyAddress field
-    //   await newAccount.save();
-    // }
-    res.status(200).json({
-      success: true,
-      message: "Account created successfully",
-      newAccount,
-      // newCompanyAccount: newCompanyAccount
-      //   ? {
-      //       companyId: newCompanyAccount.companyId,
-      //       companyName: newCompanyAccount.companyName,
-      //       country: newCompanyAccount.country,
-      //       streetAddress: newCompanyAccount.streetAddress,
-      //       city: newCompanyAccount.city,
-      //       state: newCompanyAccount.state,
-      //       postalCode: newCompanyAccount.postalCode,
-      //       foldertemplate: newCompanyAccount.foldertemplate,
-      //       userid:newCompanyAccount.userid,
-      //       active: newCompanyAccount.active,
-      //     }
-      //   : null,
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    
+    const account = new Accounts(req.body);
+    await account.save();
+    res.status(201).json(account);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
-
 //get all accounts
 const getAccounts = async (req, res) => {
   try {
