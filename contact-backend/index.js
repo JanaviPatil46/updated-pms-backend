@@ -10,8 +10,8 @@ const mongoose = require('mongoose');
 
 // Middleware
 app.use(cors());
-// app.use(express.json());
-app.use(express.json({ limit: '50mb' })); 
+app.use(express.json());
+// app.use(express.json({ limit: '50mb' })); 
 //   Routes for contacts
 app.use('/contacts', contactRoutes)
 
@@ -33,13 +33,13 @@ const  editloginnotifyemailsync = require("./middleware/editloginnotifyemailsync
 app.use('/editloginnotifyemail', editloginnotifyemailsync)
 
 //Cors Polycy 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true'); // Set the header to 'true' to allow credentials
-    next();
-  });
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+//     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+//     res.header('Access-Control-Allow-Credentials', 'true'); // Set the header to 'true' to allow credentials
+//     next();
+//   });
 
 // database connect
 dbconnect()

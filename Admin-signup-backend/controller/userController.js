@@ -291,6 +291,7 @@ const adminSignup = async (req, res) => {
     contact.login = false;
     contact.notify = false;
     contact.emailSync = false;
+    contact.userid = newUser._id
     await contact.save();
 
     res.status(201).json({
@@ -463,60 +464,60 @@ const updateUserPasswordwithoutAut = async (req, res) => {
   }
 };
 
-// const getUserByEmail = async (req, res) => {
-//   const { email } = req.params;
-//   try {
-//     // Find the User by email
-//     const user = await User.find({ email });
-
-//     if (user.length === 0) {
-//       return res.status(200).json({ error: "No such User", user });
-//     }
-
-//     res.status(200).json({ message: "User retrieved successfully", user });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-const Account = require("../models/AccountModel");
 const getUserByEmail = async (req, res) => {
+  const { email } = req.params;
   try {
-    const { email } = req.params;
+    // Find the User by email
+    const user = await User.find({ email });
 
-    // Find all users with this email
-    const users = await User.find({ email });
-
-    if (!users.length) {
-      return res.status(404).json({ message: "User not found" });
+    if (user.length === 0) {
+      return res.status(200).json({ error: "No such User", user });
     }
 
-    // Get userIds
-    const userIds = users.map(u => u._id);
-
-    // Find all accounts where userid includes one of these users
-    const accounts = await Account.find({ userid: { $in: userIds } })
-      .select("accountName userid");
-
-    // Map accounts to users
-    const usersWithAccounts = users.map(user => {
-      const account = accounts.find(acc =>
-        acc.userid.some(id => id.toString() === user._id.toString())
-      );
-      return {
-        ...user.toObject(),
-        // accountName: account ? account.accountName : null
- accountId: account ? account._id : null,
-        accountName: account ? account.accountName : null
-      };
-    });
-
-    res.json({ user: usersWithAccounts });
-
+    res.status(200).json({ message: "User retrieved successfully", user });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
+const Account = require("../models/AccountModel");
+// const getUserByEmail = async (req, res) => {
+//   try {
+//     const { email } = req.params;
+
+//     // Find all users with this email
+//     const users = await User.find({ email });
+
+//     if (!users.length) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Get userIds
+//     const userIds = users.map(u => u._id);
+
+//     // Find all accounts where userid includes one of these users
+//     const accounts = await Account.find({ userid: { $in: userIds } })
+//       .select("accountName userid");
+
+//     // Map accounts to users
+//     const usersWithAccounts = users.map(user => {
+//       const account = accounts.find(acc =>
+//         acc.userid.some(id => id.toString() === user._id.toString())
+//       );
+//       return {
+//         ...user.toObject(),
+//         // accountName: account ? account.accountName : null
+//  accountId: account ? account._id : null,
+//         accountName: account ? account.accountName : null
+//       };
+//     });
+
+//     res.json({ user: usersWithAccounts });
+
+//   } catch (error) {
+//     console.error("Error fetching users:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 
 // UPDATE a LoginStatus
 const updateLoginStatus = async (req, res) => {

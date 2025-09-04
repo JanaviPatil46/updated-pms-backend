@@ -1,4 +1,4 @@
-const mongoose = require("mongoose"); // Make sure to add this line
+const mongoose = require("mongoose")// Make sure to add this line
 const Accounts = require("../models/AccountModel"); // Adjust the path to your actual model
 const Tags = require("../models/tagModel");
 const Contacts = require("../models/contactsModel");
@@ -39,7 +39,7 @@ const path = require("path");
 //   }
 // };
 
-export const createAccount = async (req, res) => {
+const createAccount = async (req, res) => {
   try {
      // Check if accountName already exists
     const existing = await Accounts.findOne({ accountName: req.body.accountName });
@@ -183,44 +183,7 @@ const updateAccountTags = async (req, res) => {
   }
 };
 
-// const updateAccountTags = async (req, res) => {
-//   const { id } = req.params;
-//   const { tags } = req.body; // Expecting an array of tag IDs
 
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(400).json({ error: "Invalid Account ID" });
-//   }
-
-//   if (!Array.isArray(tags)) {
-//     return res.status(400).json({ error: "Tags must be an array" });
-//   }
-
-//   try {
-//     const account = await Accounts.findById(id);
-
-//     if (!account) {
-//       return res.status(404).json({ error: "No such Account" });
-//     }
-
-//     // Create a Set to prevent duplicates
-//     const existingTagsSet = new Set(account.tags.map(tag => tag.toString()));
-
-//     // Add only new tags (avoid duplicates)
-//     const newTags = tags.filter(tag => !existingTagsSet.has(tag));
-
-//     if (newTags.length === 0) {
-//       return res.status(200).json({ message: "No new tags to add", account });
-//     }
-
-//     // Update account tags and save
-//     account.tags.push(...newTags);
-//     await account.save();
-
-//     res.status(200).json({ message: "Account tags updated successfully", account });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 
 // Get a single Account
 const getAccountsUserId = async (req, res) => {
@@ -286,58 +249,7 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-// //update a new Account
-// const updateAccount = async (req, res) => {
-//     const { id } = req.params;
-//     // console.log(id)
-//     // console.log(req.body)
 
-//     if (!mongoose.Types.ObjectId.isValid(id)) {
-//         return res.status(404).json({ error: "Invalid Account ID" });
-//     }
-
-//     try {
-//         const updatedAccount = await Accounts.findOneAndUpdate(
-//             { _id: id },
-//             { ...req.body },
-//             { new: true }
-//         );
-
-//         if (!updatedAccount) {
-//             return res.status(404).json({ error: "No such Account" });
-//         }
-
-//         res.status(200).json({ message: "Account Updated successfully", updatedAccount });
-//     } catch (error) {
-//         return res.status(500).json({ error: error.message });
-//     }
-// };
-
-// const updateAccount = async (req, res) => {
-//   const { id } = req.params;
-
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(404).json({ error: "Invalid Account ID" });
-//   }
-
-//   try {
-//     // Extract data from the request body
-//     const { clientType, accountName, tags, teamMember, companyName, country, streetAddress, city, state, postalCode, contacts, userid,active } = req.body;
-
-//     // Find and update the account information
-//     const updatedAccount = await Accounts.findOneAndUpdate({ _id: id }, { clientType, companyName,accountName, tags, teamMember, contacts,userid,country, streetAddress, city, state, postalCode, active }, { new: true });
-
-//     if (!updatedAccount) {
-//       return res.status(404).json({ error: "No such Account" });
-//     }
-
-    
-
-//     res.status(200).json({ message: "Account Updated successfully", updatedAccount });
-//   } catch (error) {
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
 const updateAccount = async (req, res) => {
   const { id } = req.params;
 
@@ -568,40 +480,6 @@ const removeContactFromAccount = async (req, res) => {
   }
 };
 
-//get all Account List
-// const getActiveAccountList = async (req, res) => {
-//   try {
-//     const { isActive } = req.params;
-
-//     // const teamMembers = await TeamMember.find({})
-//     const accounts = await Accounts.find({ active: isActive }).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts" }).sort({ createdAt: -1 });
-
-//     const accountlist = accounts.map((account) => {
-//       return {
-//         id: account._id,
-//         Name: account.accountName,
-//         Follow: account.contacts.map((contact) => contact.email).join(', '),
-//         Type: account.clientType,
-//         Invoices: "",
-//         Credits: "",
-//         Tasks: "",
-//         Team: account.teamMember,
-//         Tags: account.tags,
-//         Proposals: "",
-//         Unreadchats: "",
-//         Pendingorganizers: "",
-//         Pendingsignatures: "",
-//         Lastlogin: "",
-//         Contacts: account.contacts,
-//       };
-//     });
-
-//     //sort({ createdAt: -1 });
-//     res.status(200).json({ message: "Accounts retrieved successfully", accountlist });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 const getActiveAccountList = async (req, res) => {
   try {
     const { isActive } = req.params;

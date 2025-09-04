@@ -156,6 +156,10 @@ const accountSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+        active: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
@@ -207,10 +211,10 @@ const accountSchema = new mongoose.Schema(
 //     description: {
 //       type: String,
 //     },
-//     active: {
-//       type: Boolean,
-//       default: true,
-//     },
+    // active: {
+    //   type: Boolean,
+    //   default: true,
+    // },
 //  companyName: {
 //       type: String,
 //     },
