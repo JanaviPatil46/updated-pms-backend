@@ -53,12 +53,14 @@ const contactSchema = new mongoose.Schema({
         type: Boolean,
         // default : false
     },
-    tags: [{
-        type: mongoose.Schema.Types.ObjectId,
-        
-        ref: 'tag',
-        // required: true
-    }],
+    tags: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            // type: Array,
+            ref: "Tags",
+            // required: true
+          },
+        ],
 
  userid:[{
       type: mongoose.Schema.Types.ObjectId,

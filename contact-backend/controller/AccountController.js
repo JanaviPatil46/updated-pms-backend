@@ -119,7 +119,10 @@ const getAccount = async (req, res) => {
     return res.status(404).json({ error: "Invalid Account ID" });
   }
   try {
-    const account = await Accounts.findById(id) .populate({ path: 'contacts', model: 'Contacts' });;
+    const account = await Accounts.findById(id) .populate({ path: 'contacts', model: 'Contacts' ,populate: {
+          path: "userid",   // 👈 populate userid inside each contact
+          model: "User"
+        }});;
 
     if (!account) {
       return res.status(404).json({ error: "No such Account" });
