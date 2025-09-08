@@ -36,7 +36,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require('../multerConfig');
-const { createUserFromContact,updateUserPasswordwithoutAut,createUser, getUsers, getUser, deleteUser, updateUser, adminSignup, getUserByEmail, updateUserPassword, updateLoginStatus, getUserListbyId, getUsersByRoles, getVerifyUserbyPassword,uploadProfilePicture } = require("../controller/userController");
+const {deleteUserByContactId, createUserFromContact,updateUserPasswordwithoutAut,createUser, getUsers, getUser, deleteUser, updateUser, adminSignup, getUserByEmail, updateUserPassword, updateLoginStatus, getUserListbyId, getUsersByRoles, getVerifyUserbyPassword,uploadProfilePicture,getUserClientByEmail,getUserByContactId } = require("../controller/userController");
 // const { validateToken, logout, cleanupBlacklist } = require("../middleware/authJwt");
 const { validateToken, logout } = require("../middleware/authJwt");
 const { generatetoken } = require("../controller/loginController");
@@ -61,10 +61,16 @@ router.post("/login/signup", adminSignup); //It is also for create user
 router.post("/from-contact", createUserFromContact);
 router.get("/user", getUsers);
 router.get("/user/:id", getUser);
+// getUserByContactId
+router.get("/user/:contactId", getUserByContactId);
+router.delete("/user/deletecontact/:contactId",deleteUserByContactId)
 router.post("/user", createUser);
 router.delete("/user/:id", deleteUser);
 router.patch("/user/:id", updateUser);
 router.get("/user/email/getuserbyemail/:email", getUserByEmail);
+// getUserClientByEmail
+router.get("/user/client/getuserbyemail/:email", getUserClientByEmail)
+
 
 router.post("/updateUserLoginStatus", updateLoginStatus);
 router.get("/resetpassword/verifytoken", validateToken, (req, res) => {

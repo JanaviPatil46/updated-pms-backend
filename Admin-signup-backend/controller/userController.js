@@ -283,6 +283,7 @@ const adminSignup = async (req, res) => {
       login: contact.login,
       notify: contact.notify,
       emailSync: contact.emailSync,
+      contactId:contact._id
     });
 
     await newUser.save();
@@ -327,7 +328,50 @@ const getUser = async (req, res) => {
 
   res.status(200).json(user);
 };
+const getUserByContactId = async (req, res) => {
+  const { contactId } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    return res.status(404).json({ error: "Invalid contact ID format" });
+  }
+
+  try {
+    const user = await User.findOne({ contactId: contactId });
+    
+    if (!user) {
+      return res.status(404).json({ error: "No user found with this contact ID" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Server error while fetching user" });
+  }
+};
+const deleteUserByContactId = async (req, res) => {
+  const { contactId } = req.params;
+
+  // Validate contactId (adjust validation based on your contactId format)
+  if (!contactId || contactId.trim() === '') {
+    return res.status(400).json({ error: "Contact ID is required" });
+  }
+
+  try {
+    // Find and delete the user by contactId
+    const user = await User.findOneAndDelete({ contactId: contactId });
+    
+    if (!user) {
+      return res.status(404).json({ error: "No user found with this contact ID" });
+    }
+
+    res.status(200).json({ 
+      message: "User successfully deleted",
+      deletedUser: user 
+    });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Server error while deleting user" });
+  }
+};
 //create new user
 
 const createUser = async (req, res) => {
@@ -480,44 +524,44 @@ const getUserByEmail = async (req, res) => {
   }
 };
 const Account = require("../models/AccountModel");
-// const getUserByEmail = async (req, res) => {
-//   try {
-//     const { email } = req.params;
+const getUserClientByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
 
-//     // Find all users with this email
-//     const users = await User.find({ email });
+    // Find all users with this email
+    const users = await User.find({ email });
 
-//     if (!users.length) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    if (!users.length) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-//     // Get userIds
-//     const userIds = users.map(u => u._id);
+    // Get userIds
+    const userIds = users.map(u => u._id);
 
-//     // Find all accounts where userid includes one of these users
-//     const accounts = await Account.find({ userid: { $in: userIds } })
-//       .select("accountName userid");
+    // Find all accounts where userid includes one of these users
+    const accounts = await Account.find({ userid: { $in: userIds } })
+      .select("accountName userid");
 
-//     // Map accounts to users
-//     const usersWithAccounts = users.map(user => {
-//       const account = accounts.find(acc =>
-//         acc.userid.some(id => id.toString() === user._id.toString())
-//       );
-//       return {
-//         ...user.toObject(),
-//         // accountName: account ? account.accountName : null
-//  accountId: account ? account._id : null,
-//         accountName: account ? account.accountName : null
-//       };
-//     });
+    // Map accounts to users
+    const usersWithAccounts = users.map(user => {
+      const account = accounts.find(acc =>
+        acc.userid.some(id => id.toString() === user._id.toString())
+      );
+      return {
+        ...user.toObject(),
+        // accountName: account ? account.accountName : null
+ accountId: account ? account._id : null,
+        accountName: account ? account.accountName : null
+      };
+    });
 
-//     res.json({ user: usersWithAccounts });
+    res.json({ user: usersWithAccounts });
 
-//   } catch (error) {
-//     console.error("Error fetching users:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // UPDATE a LoginStatus
 const updateLoginStatus = async (req, res) => {
@@ -674,5 +718,5 @@ module.exports = {createUserFromContact,
   getUsersByRoles,
   getVerifyUserbyPassword,
   updateUserPasswordwithoutAut,
-  uploadProfilePicture
+  uploadProfilePicture,getUserClientByEmail,getUserByContactId,deleteUserByContactId
 };

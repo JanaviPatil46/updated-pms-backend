@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         // default : false
     },
+    contactId:{
+            type: mongoose.Schema.Types.ObjectId,
+           
+            ref: "Contacts",
+            //required: [true, 'Access is required'],
+          },
 });
 
 // Hash password before saving

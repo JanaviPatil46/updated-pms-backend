@@ -56,6 +56,10 @@ const accountSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+        userid:[ {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        }],
   },
   { timestamps: true }
 );

@@ -99,6 +99,12 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         // default : false
     },
+    contactId:{
+        type: mongoose.Schema.Types.ObjectId,
+       
+        ref: "Contacts",
+        //required: [true, 'Access is required'],
+      },
   },
   { timestamps: true }
 );
@@ -130,20 +136,40 @@ userSchema.statics.signup = async function (data) {
   console.log("user",user)
   return user;
 };
-userSchema.statics.login = async function ({ email, username, password }) {
-  const user = await this.findOne({ email, username });
-  if (!user) {
-    throw Error("Incorrect email or username");
+// userSchema.statics.login = async function ({ email, username, password }) {
+//   const user = await this.findOne({ email, username });
+//   if (!user) {
+//     throw Error("Incorrect email or username");
+//   }
+
+//   const match = await bcrypt.compare(password, user.password);
+//   if (!match) {
+//     throw Error("Incorrect password");
+//   }
+
+//   return user;
+// };
+
+//!static login method
+userSchema.statics.login = async function (data) {
+  const { email, password } = data;
+
+  if (!email || !password) {
+    throw Error("all fields required ");
   }
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) {
-    throw Error("Incorrect password");
+  const user = await this.findOne({ email });
+  if (!user) {
+    throw Error("invalid user Id ");
+  }
+
+  const auth = await bcrypt.compare(password, user.password);
+  if (!auth) {
+    throw Error("invalid password ");
   }
 
   return user;
 };
-
 
 
 module.exports = mongoose.model("User", userSchema);
