@@ -122,14 +122,14 @@ const createOrganizerAccountWise = async (req, res) => {
       });
     };
 //  console.log(account);
-    const validContacts = account.contacts.filter(
-      (contact) => contact.emailSync
-    );
-    if (validContacts.length === 0) {
-      return res
-        .status(400)
-        .json({ status: 400, message: "No contacts with emailSync enabled." });
-    }
+    // const validContacts = account.contacts.filter(
+    //   (contact) => contact.emailSync
+    // );
+    // if (validContacts.length === 0) {
+    //   return res
+    //     .status(400)
+    //     .json({ status: 400, message: "No contacts with emailSync enabled." });
+    // }
 
     const missingContactsAccounts = [];
     const organizerLink = `http://localhost:3000/organizers/update/${newOrganizerAccountWise._id}`;
@@ -141,17 +141,17 @@ const createOrganizerAccountWise = async (req, res) => {
         const contact = await Contacts.findById(contactId);
         const organizerName = replacePlaceholders(organizertemp.organizerName, {
           ACCOUNT_NAME: account.accountName,
-          FIRST_NAME: contact.firstName,
-          MIDDLE_NAME: contact.middleName,
-          LAST_NAME: contact.lastName,
-          CONTACT_NAME: contact.contactName,
-          COMPANY_NAME: contact.companyName,
-          COUNTRY: contact.country,
-          STREET_ADDRESS: contact.streetAddress,
-          STATEPROVINCE: contact.state,
-          PHONE_NUMBER: contact.phoneNumbers,
-          ZIPPOSTALCODE: contact.postalCode,
-          CITY: contact.city,
+          // FIRST_NAME: contact.firstName,
+          // MIDDLE_NAME: contact.middleName,
+          // LAST_NAME: contact.lastName,
+          // CONTACT_NAME: contact.contactName,
+          // COMPANY_NAME: contact.companyName,
+          // COUNTRY: contact.country,
+          // STREET_ADDRESS: contact.streetAddress,
+          // STATEPROVINCE: contact.state,
+          // PHONE_NUMBER: contact.phoneNumbers,
+          // ZIPPOSTALCODE: contact.postalCode,
+          // CITY: contact.city,
           CURRENT_DAY_FULL_DATE: currentFullDate,
           CURRENT_DAY_NUMBER: currentDayNumber,
           CURRENT_DAY_NAME: currentDayName,
@@ -383,25 +383,25 @@ const getOrganizerByAccountId = async (req, res) => {
         }
 
         // Filter contacts with emailSync enabled
-        const validContact = account.contacts.filter(
-          (contact) => contact.emailSync
-        );
+        // const validContact = account.contacts.filter(
+        //   (contact) => contact.emailSync
+        // );
         // console.log(validContact);
 
         // Define placeholder values
         const placeholderValues = {
           ACCOUNT_NAME: account.accountName || "",
-          FIRST_NAME: validContact[0]?.firstName || "",
-          MIDDLE_NAME: validContact[0]?.middleName || "",
-          LAST_NAME: validContact[0]?.lastName || "",
-          CONTACT_NAME: validContact[0]?.contactName || "",
-          COMPANY_NAME: validContact[0]?.companyName || "",
-          COUNTRY: validContact[0]?.country || "",
-          STREET_ADDRESS: validContact[0]?.streetAddress || "",
-          STATEPROVINCE: validContact[0]?.state || "",
-          PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-          ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-          CITY: validContact[0]?.city || "",
+          // FIRST_NAME: validContact[0]?.firstName || "",
+          // MIDDLE_NAME: validContact[0]?.middleName || "",
+          // LAST_NAME: validContact[0]?.lastName || "",
+          // CONTACT_NAME: validContact[0]?.contactName || "",
+          // COMPANY_NAME: validContact[0]?.companyName || "",
+          // COUNTRY: validContact[0]?.country || "",
+          // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+          // STATEPROVINCE: validContact[0]?.state || "",
+          // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+          // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+          // CITY: validContact[0]?.city || "",
           CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
           CURRENT_DAY_NUMBER: new Date().getDate(),
           CURRENT_DAY_NAME: new Date().toLocaleString("default", {
@@ -490,25 +490,25 @@ const getActiveOrganizerByAccountId = async (req, res) => {
         }
 
         // Filter contacts with emailSync enabled
-        const validContact = account.contacts.filter(
-          (contact) => contact.emailSync
-        );
+        // const validContact = account.contacts.filter(
+        //   (contact) => contact.emailSync
+        // );
         // console.log(validContact);
 
         // Define placeholder values
         const placeholderValues = {
           ACCOUNT_NAME: account.accountName || "",
-          FIRST_NAME: validContact[0]?.firstName || "",
-          MIDDLE_NAME: validContact[0]?.middleName || "",
-          LAST_NAME: validContact[0]?.lastName || "",
-          CONTACT_NAME: validContact[0]?.contactName || "",
-          COMPANY_NAME: validContact[0]?.companyName || "",
-          COUNTRY: validContact[0]?.country || "",
-          STREET_ADDRESS: validContact[0]?.streetAddress || "",
-          STATEPROVINCE: validContact[0]?.state || "",
-          PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-          ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-          CITY: validContact[0]?.city || "",
+          // FIRST_NAME: validContact[0]?.firstName || "",
+          // MIDDLE_NAME: validContact[0]?.middleName || "",
+          // LAST_NAME: validContact[0]?.lastName || "",
+          // CONTACT_NAME: validContact[0]?.contactName || "",
+          // COMPANY_NAME: validContact[0]?.companyName || "",
+          // COUNTRY: validContact[0]?.country || "",
+          // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+          // STATEPROVINCE: validContact[0]?.state || "",
+          // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+          // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+          // CITY: validContact[0]?.city || "",
           CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
           CURRENT_DAY_NUMBER: new Date().getDate(),
           CURRENT_DAY_NAME: new Date().toLocaleString("default", {
@@ -598,25 +598,25 @@ const getPendingOrganizersByAccountId = async (req, res) => {
         }
 
         // Filter contacts with emailSync enabled
-        const validContact = account.contacts.filter(
-          (contact) => contact.emailSync
-        );
+        // const validContact = account.contacts.filter(
+        //   (contact) => contact.emailSync
+        // );
         // console.log(validContact);
 
         // Define placeholder values
         const placeholderValues = {
           ACCOUNT_NAME: account.accountName || "",
-          FIRST_NAME: validContact[0]?.firstName || "",
-          MIDDLE_NAME: validContact[0]?.middleName || "",
-          LAST_NAME: validContact[0]?.lastName || "",
-          CONTACT_NAME: validContact[0]?.contactName || "",
-          COMPANY_NAME: validContact[0]?.companyName || "",
-          COUNTRY: validContact[0]?.country || "",
-          STREET_ADDRESS: validContact[0]?.streetAddress || "",
-          STATEPROVINCE: validContact[0]?.state || "",
-          PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-          ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-          CITY: validContact[0]?.city || "",
+          // FIRST_NAME: validContact[0]?.firstName || "",
+          // MIDDLE_NAME: validContact[0]?.middleName || "",
+          // LAST_NAME: validContact[0]?.lastName || "",
+          // CONTACT_NAME: validContact[0]?.contactName || "",
+          // COMPANY_NAME: validContact[0]?.companyName || "",
+          // COUNTRY: validContact[0]?.country || "",
+          // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+          // STATEPROVINCE: validContact[0]?.state || "",
+          // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+          // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+          // CITY: validContact[0]?.city || "",
           CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
           CURRENT_DAY_NUMBER: new Date().getDate(),
           CURRENT_DAY_NAME: new Date().toLocaleString("default", {

@@ -70,7 +70,6 @@ const getJobs = async (req, res) => {
   }
 };
 
-
 const getJobsByAccount = async (req, res) => {
   try {
     const { accountId } = req.params;
@@ -83,66 +82,64 @@ const getJobsByAccount = async (req, res) => {
 
     const jobList = [];
 
+    // Date placeholders
+    const currentDate = new Date();
+    const lastDay = new Date(currentDate);
+    lastDay.setDate(lastDay.getDate() - 1);
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const placeholderData = {
+      CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString("en-US"),
+      CURRENT_DAY_NUMBER: currentDate.getDate(),
+      CURRENT_DAY_NAME: currentDate.toLocaleDateString("en-US", { weekday: "long" }),
+      CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+      CURRENT_MONTH_NAME: currentDate.toLocaleDateString("en-US", { month: "long" }),
+      CURRENT_QUARTER: Math.floor((currentDate.getMonth() + 3) / 3),
+      CURRENT_YEAR: currentDate.getFullYear(),
+
+      LAST_DAY_FULL_DATE: lastDay.toLocaleDateString("en-US"),
+      LAST_DAY_NUMBER: lastDay.getDate(),
+      LAST_DAY_NAME: lastDay.toLocaleDateString("en-US", { weekday: "long" }),
+      LAST_MONTH_NUMBER: lastDay.getMonth() + 1,
+      LAST_MONTH_NAME: lastDay.toLocaleDateString("en-US", { month: "long" }),
+      LAST_QUARTER: Math.floor((lastDay.getMonth() + 3) / 3),
+      LAST_YEAR: lastDay.getFullYear(),
+
+      NEXT_DAY_FULL_DATE: nextDay.toLocaleDateString("en-US"),
+      NEXT_DAY_NUMBER: nextDay.getDate(),
+      NEXT_DAY_NAME: nextDay.toLocaleDateString("en-US", { weekday: "long" }),
+      NEXT_MONTH_NUMBER: nextDay.getMonth() + 1,
+      NEXT_MONTH_NAME: nextDay.toLocaleDateString("en-US", { month: "long" }),
+      NEXT_QUARTER: Math.floor((nextDay.getMonth() + 3) / 3),
+      NEXT_YEAR: nextDay.getFullYear(),
+    };
+
+    const replacePlaceholders = (template, data) => {
+      return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
+        return data[placeholder.trim()] || "";
+      });
+    };
+
     for (const job of jobs) {
       const accountsname = job.accounts.map((account) => account.accountName);
       const accountIds = job.accounts.map((account) => account._id);
 
-      let foundValidContact = false;
-      let placeholderData = {};
+      // Add account name into placeholder data
+      const finalPlaceholders = {
+        ...placeholderData,
+        ACCOUNT_NAME: accountsname.join(", "),
+      };
 
-      for (const accountId of accountIds) {
-        // Fetch account and associated contacts
-        const account = await Accounts.findById(accountId).populate("contacts");
-        
-        if (account) {
-          const validContacts = account.contacts.filter((contact) => contact.login);
+      const jobName = replacePlaceholders(job.jobname, finalPlaceholders);
 
-          if (validContacts.length > 0) {
-            foundValidContact = true;
-            const contact = validContacts[0]; // Select the first valid contact
-
-            // Prepare placeholder data
-            placeholderData = {
-              ACCOUNT_NAME: accountsname.join(", "),
-              FIRST_NAME: contact.firstName,
-              MIDDLE_NAME: contact.middleName,
-              LAST_NAME: contact.lastName,
-              CONTACT_NAME: contact.contactName,
-              COMPANY_NAME: contact.companyName,
-              COUNTRY: contact.country,
-              STREET_ADDRESS: contact.streetAddress,
-              STATEPROVINCE: contact.state,
-              PHONE_NUMBER: contact.phoneNumbers,
-              ZIPPOSTALCODE: contact.postalCode,
-              CITY: contact.city,
-            };
-            break; // Exit loop once we find a valid contact
-          }
-        }
-      }
-
-      if (!foundValidContact) {
-        // Add job with a default placeholder if no valid contacts exist
-        jobList.push({
-          id: job._id,
-          Name: job.jobname, // Keeping the original job name
-          Pipeline: job.pipeline?.pipelineName || null,
-          Accounts: accountsname,
-          AccountId:accountIds,
-          Warning: "No contacts with login enabled",
-        });
-      } else {
-        // Replace placeholders in job name
-        const jobName = replacePlaceholders(job.jobname, placeholderData);
-        
-        jobList.push({
-          id: job._id,
-          Name: jobName,
-          Pipeline: job.pipeline?.pipelineName || null,
-          Accounts: accountsname,
-          AccountId:accountIds
-        });
-      }
+      jobList.push({
+        id: job._id,
+        Name: jobName,
+        Pipeline: job.pipeline?.pipelineName || null,
+        Accounts: accountsname,
+        AccountId: accountIds,
+      });
     }
 
     res.status(200).json({ message: "Jobs retrieved successfully", jobList });
@@ -150,6 +147,86 @@ const getJobsByAccount = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// const getJobsByAccount = async (req, res) => {
+//   try {
+//     const { accountId } = req.params;
+//     const accountIdsArray = accountId.split(",");
+
+//     // Fetch jobs where the accountId exists in the "accounts" array
+//     const jobs = await Job.find({ accounts: { $in: accountIdsArray } })
+//       .populate({ path: "pipeline", model: "pipeline" })
+//       .populate({ path: "accounts", model: "Accounts" });
+
+//     const jobList = [];
+
+//     for (const job of jobs) {
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountIds = job.accounts.map((account) => account._id);
+
+//       let foundValidContact = false;
+//       let placeholderData = {};
+
+//       for (const accountId of accountIds) {
+//         // Fetch account and associated contacts
+//         const account = await Accounts.findById(accountId).populate("contacts");
+        
+//         if (account) {
+//           const validContacts = account.contacts.filter((contact) => contact.login);
+
+//           if (validContacts.length > 0) {
+//             foundValidContact = true;
+//             const contact = validContacts[0]; // Select the first valid contact
+
+//             // Prepare placeholder data
+//             placeholderData = {
+//               ACCOUNT_NAME: accountsname.join(", "),
+//               FIRST_NAME: contact.firstName,
+//               MIDDLE_NAME: contact.middleName,
+//               LAST_NAME: contact.lastName,
+//               CONTACT_NAME: contact.contactName,
+//               COMPANY_NAME: contact.companyName,
+//               COUNTRY: contact.country,
+//               STREET_ADDRESS: contact.streetAddress,
+//               STATEPROVINCE: contact.state,
+//               PHONE_NUMBER: contact.phoneNumbers,
+//               ZIPPOSTALCODE: contact.postalCode,
+//               CITY: contact.city,
+//             };
+//             break; // Exit loop once we find a valid contact
+//           }
+//         }
+//       }
+
+//       if (!foundValidContact) {
+//         // Add job with a default placeholder if no valid contacts exist
+//         jobList.push({
+//           id: job._id,
+//           Name: job.jobname, // Keeping the original job name
+//           Pipeline: job.pipeline?.pipelineName || null,
+//           Accounts: accountsname,
+//           AccountId:accountIds,
+//           Warning: "No contacts with login enabled",
+//         });
+//       } else {
+//         // Replace placeholders in job name
+//         const jobName = replacePlaceholders(job.jobname, placeholderData);
+        
+//         jobList.push({
+//           id: job._id,
+//           Name: jobName,
+//           Pipeline: job.pipeline?.pipelineName || null,
+//           Accounts: accountsname,
+//           AccountId:accountIds
+//         });
+//       }
+//     }
+
+//     res.status(200).json({ message: "Jobs retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 
 
@@ -367,15 +444,15 @@ const getJobList = async (req, res) => {
         accountId
       ).populate("contacts");
 
-      const validContacts = account.contacts.filter((contact) => contact.login);
-      if (validContacts.length === 0) {
-        return res
-          .status(400)
-          .json({
-            status: 400,
-            message: "No contacts with emailSync enabled.",
-          });
-      }
+      // const validContacts = account.contacts.filter((contact) => contact.login);
+      // if (validContacts.length === 0) {
+      //   return res
+      //     .status(400)
+      //     .json({
+      //       status: 400,
+      //       message: "No contacts with emailSync enabled.",
+      //     });
+      // }
       let stageNames = null;
 
       if (Array.isArray(job.stageid)) {
@@ -409,20 +486,20 @@ const getJobList = async (req, res) => {
         : null;
 
         const emailPromises = validContacts.map(async (contactId) => {
-          const contact = await Contacts.findById(contactId);
+          // const contact = await Contacts.findById(contactId);
           const placeholderData = {
             ACCOUNT_NAME: accountsname.join(", "),
-            FIRST_NAME: contact.firstName,
-            MIDDLE_NAME: contact.middleName,
-            LAST_NAME: contact.lastName,
-            CONTACT_NAME: contact.contactName,
-            COMPANY_NAME: contact.companyName,
-            COUNTRY: contact.country,
-            STREET_ADDRESS: contact.streetAddress,
-            STATEPROVINCE: contact.state,
-            PHONE_NUMBER: contact.phoneNumbers,
-            ZIPPOSTALCODE: contact.postalCode,
-            CITY: contact.city,
+            // FIRST_NAME: contact.firstName,
+            // MIDDLE_NAME: contact.middleName,
+            // LAST_NAME: contact.lastName,
+            // CONTACT_NAME: contact.contactName,
+            // COMPANY_NAME: contact.companyName,
+            // COUNTRY: contact.country,
+            // STREET_ADDRESS: contact.streetAddress,
+            // STATEPROVINCE: contact.state,
+            // PHONE_NUMBER: contact.phoneNumbers,
+            // ZIPPOSTALCODE: contact.postalCode,
+            // CITY: contact.city,
             CURRENT_DAY_FULL_DATE: currentFullDate,
             CURRENT_DAY_NUMBER: currentDayNumber,
             CURRENT_DAY_NAME: currentDayName,
@@ -489,8 +566,6 @@ const getJobList = async (req, res) => {
   }
 };
 
-
-
 const getActiveJobList = async (req, res) => {
   try {
     const { isActive } = req.params;
@@ -507,6 +582,45 @@ const getActiveJobList = async (req, res) => {
 
     const jobList = [];
 
+    // ✅ Build date placeholders
+    const currentDate = new Date();
+    const lastDay = new Date(currentDate);
+    lastDay.setDate(lastDay.getDate() - 1);
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const commonPlaceholders = {
+      CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString("en-US"),
+      CURRENT_DAY_NUMBER: currentDate.getDate(),
+      CURRENT_DAY_NAME: currentDate.toLocaleDateString("en-US", { weekday: "long" }),
+      CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+      CURRENT_MONTH_NAME: currentDate.toLocaleDateString("en-US", { month: "long" }),
+      CURRENT_QUARTER: Math.floor((currentDate.getMonth() + 3) / 3),
+      CURRENT_YEAR: currentDate.getFullYear(),
+
+      LAST_DAY_FULL_DATE: lastDay.toLocaleDateString("en-US"),
+      LAST_DAY_NUMBER: lastDay.getDate(),
+      LAST_DAY_NAME: lastDay.toLocaleDateString("en-US", { weekday: "long" }),
+      LAST_MONTH_NUMBER: lastDay.getMonth() + 1,
+      LAST_MONTH_NAME: lastDay.toLocaleDateString("en-US", { month: "long" }),
+      LAST_QUARTER: Math.floor((lastDay.getMonth() + 3) / 3),
+      LAST_YEAR: lastDay.getFullYear(),
+
+      NEXT_DAY_FULL_DATE: nextDay.toLocaleDateString("en-US"),
+      NEXT_DAY_NUMBER: nextDay.getDate(),
+      NEXT_DAY_NAME: nextDay.toLocaleDateString("en-US", { weekday: "long" }),
+      NEXT_MONTH_NUMBER: nextDay.getMonth() + 1,
+      NEXT_MONTH_NAME: nextDay.toLocaleDateString("en-US", { month: "long" }),
+      NEXT_QUARTER: Math.floor((nextDay.getMonth() + 3) / 3),
+      NEXT_YEAR: nextDay.getFullYear(),
+    };
+
+    const replacePlaceholders = (template, data) => {
+      return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
+        return data[placeholder.trim()] || "";
+      });
+    };
+
     for (const job of jobs) {
       const pipeline = await Pipeline.findById(job.pipeline);
       if (!pipeline) continue;
@@ -517,19 +631,6 @@ const getActiveJobList = async (req, res) => {
 
       const accountsname = job.accounts.map((account) => account.accountName);
       const accountId = job.accounts.map((account) => account._id);
-
-      // const account = await Accounts.findById(accountId).populate("contacts");
-
-      // // Filter only contacts that have login access
-      // const validContacts = account.contacts.filter((contact) => contact.login);
-         // const account = await Accounts.findById(accountId).populate("contacts");
-         const account = await Accounts.find({ _id: { $in: accountId } }).populate("contacts");
-         // Filter only contacts that have login access
-         // const validContacts = account.contacts.filter((contact) => contact.login);
-    // Collect valid contacts
-    const validContacts = account.flatMap((account) => 
-     account.contacts ? account.contacts.filter((contact) => contact.login) : []
-   );
 
       let stageNames = null;
       if (Array.isArray(job.stageid)) {
@@ -554,57 +655,14 @@ const getActiveJobList = async (req, res) => {
           }
         : null;
 
-      const commonPlaceholders = {
+      // ✅ Only account + dates (no contacts)
+      const finalPlaceholders = {
+        ...commonPlaceholders,
         ACCOUNT_NAME: accountsname.join(", "),
-        CURRENT_DAY_FULL_DATE: currentFullDate,
-        CURRENT_DAY_NUMBER: currentDayNumber,
-        CURRENT_DAY_NAME: currentDayName,
-        CURRENT_WEEK: currentWeek,
-        CURRENT_MONTH_NUMBER: currentMonthNumber,
-        CURRENT_MONTH_NAME: currentMonthName,
-        CURRENT_QUARTER: currentQuarter,
-        CURRENT_YEAR: currentYear,
-        LAST_DAY_FULL_DATE: lastDayFullDate,
-        LAST_DAY_NUMBER: lastDayNumber,
-        LAST_DAY_NAME: lastDayName,
-        LAST_WEEK: lastWeek,
-        LAST_MONTH_NUMBER: lastMonthNumber,
-        LAST_MONTH_NAME: lastMonthName,
-        LAST_QUARTER: lastQuarter,
-        LAST_YEAR: lastYear,
-        NEXT_DAY_FULL_DATE: nextDayFullDate,
-        NEXT_DAY_NUMBER: nextDayNumber,
-        NEXT_DAY_NAME: nextDayName,
-        NEXT_WEEK: nextWeek,
-        NEXT_MONTH_NUMBER: nextMonthNumber,
-        NEXT_MONTH_NAME: nextMonthName,
-        NEXT_QUARTER: nextQuarter,
-        NEXT_YEAR: nextYear,
       };
 
-      let placeholderData = { ...commonPlaceholders };
-
-      if (validContacts.length > 0) {
-        // Pick the first valid contact to use for placeholders
-        const firstContact = await Contacts.findById(validContacts[0]._id);
-        placeholderData = {
-          ...commonPlaceholders,
-          FIRST_NAME: firstContact?.firstName || "",
-          MIDDLE_NAME: firstContact?.middleName || "",
-          LAST_NAME: firstContact?.lastName || "",
-          CONTACT_NAME: firstContact?.contactName || "",
-          COMPANY_NAME: firstContact?.companyName || "",
-          COUNTRY: firstContact?.country || "",
-          STREET_ADDRESS: firstContact?.streetAddress || "",
-          STATEPROVINCE: firstContact?.state || "",
-          PHONE_NUMBER: firstContact?.phoneNumbers || "",
-          ZIPPOSTALCODE: firstContact?.postalCode || "",
-          CITY: firstContact?.city || "",
-        };
-      }
-
-      const jobName = replacePlaceholders(job.jobname, placeholderData);
-      const jobDescription = replacePlaceholders(job.description, placeholderData);
+      const jobName = replacePlaceholders(job.jobname, finalPlaceholders);
+      const jobDescription = replacePlaceholders(job.description, finalPlaceholders);
 
       jobList.push({
         id: job._id,
@@ -614,7 +672,7 @@ const getActiveJobList = async (req, res) => {
         Stage: stageNames,
         Account: accountsname,
         AccountId: accountId,
-        visibilityForClient:job.showinclientportal,
+        visibilityForClient: job.showinclientportal,
         ClientFacingStatus: clientFacingStatus,
         StartDate: job.startdate,
         DueDate: job.enddate,
@@ -633,11 +691,290 @@ const getActiveJobList = async (req, res) => {
   }
 };
 
+
+// const getActiveJobList = async (req, res) => {
+//   try {
+//     const { isActive } = req.params;
+//     const jobs = await Job.find({ active: isActive })
+//       .populate({ path: "accounts", model: "Accounts" })
+//       .populate({
+//         path: "pipeline",
+//         model: "pipeline",
+//         populate: { path: "stages", model: "stage" },
+//       })
+//       .populate({ path: "jobassignees", model: "User" })
+//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" })
+//       .sort({ createdAt: -1 });
+
+//     const jobList = [];
+
+//     for (const job of jobs) {
+//       const pipeline = await Pipeline.findById(job.pipeline);
+//       if (!pipeline) continue;
+
+//       const jobAssigneeNames = job.jobassignees.map(
+//         (assignee) => assignee.username
+//       );
+
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountId = job.accounts.map((account) => account._id);
+
+     
+//          const account = await Accounts.find({ _id: { $in: accountId } }).populate("contacts");
+       
+//     // Collect valid contacts
+//     const validContacts = account.flatMap((account) => 
+//      account.contacts ? account.contacts.filter((contact) => contact.login) : []
+//    );
+
+//       let stageNames = null;
+//       if (Array.isArray(job.stageid)) {
+//         stageNames = job.stageid
+//           .map((stageId) =>
+//             pipeline.stages.find((stage) => stage._id.equals(stageId))
+//           )
+//           .filter(Boolean)
+//           .map((stage) => stage.name);
+//       } else {
+//         const matchedStage = pipeline.stages.find((stage) =>
+//           stage._id.equals(job.stageid)
+//         );
+//         stageNames = matchedStage ? [matchedStage.name] : null;
+//       }
+
+//       const clientFacingStatus = job.clientfacingstatus
+//         ? {
+//             statusId: job.clientfacingstatus._id,
+//             statusName: job.clientfacingstatus.clientfacingName,
+//             statusColor: job.clientfacingstatus.clientfacingColour,
+//           }
+//         : null;
+
+//       const commonPlaceholders = {
+//         ACCOUNT_NAME: accountsname.join(", "),
+//         CURRENT_DAY_FULL_DATE: currentFullDate,
+//         CURRENT_DAY_NUMBER: currentDayNumber,
+//         CURRENT_DAY_NAME: currentDayName,
+//         CURRENT_WEEK: currentWeek,
+//         CURRENT_MONTH_NUMBER: currentMonthNumber,
+//         CURRENT_MONTH_NAME: currentMonthName,
+//         CURRENT_QUARTER: currentQuarter,
+//         CURRENT_YEAR: currentYear,
+//         LAST_DAY_FULL_DATE: lastDayFullDate,
+//         LAST_DAY_NUMBER: lastDayNumber,
+//         LAST_DAY_NAME: lastDayName,
+//         LAST_WEEK: lastWeek,
+//         LAST_MONTH_NUMBER: lastMonthNumber,
+//         LAST_MONTH_NAME: lastMonthName,
+//         LAST_QUARTER: lastQuarter,
+//         LAST_YEAR: lastYear,
+//         NEXT_DAY_FULL_DATE: nextDayFullDate,
+//         NEXT_DAY_NUMBER: nextDayNumber,
+//         NEXT_DAY_NAME: nextDayName,
+//         NEXT_WEEK: nextWeek,
+//         NEXT_MONTH_NUMBER: nextMonthNumber,
+//         NEXT_MONTH_NAME: nextMonthName,
+//         NEXT_QUARTER: nextQuarter,
+//         NEXT_YEAR: nextYear,
+//       };
+
+//       let placeholderData = { ...commonPlaceholders };
+
+//       if (validContacts.length > 0) {
+//         // Pick the first valid contact to use for placeholders
+//         const firstContact = await Contacts.findById(validContacts[0]._id);
+//         placeholderData = {
+//           ...commonPlaceholders,
+//           FIRST_NAME: firstContact?.firstName || "",
+//           MIDDLE_NAME: firstContact?.middleName || "",
+//           LAST_NAME: firstContact?.lastName || "",
+//           CONTACT_NAME: firstContact?.contactName || "",
+//           COMPANY_NAME: firstContact?.companyName || "",
+//           COUNTRY: firstContact?.country || "",
+//           STREET_ADDRESS: firstContact?.streetAddress || "",
+//           STATEPROVINCE: firstContact?.state || "",
+//           PHONE_NUMBER: firstContact?.phoneNumbers || "",
+//           ZIPPOSTALCODE: firstContact?.postalCode || "",
+//           CITY: firstContact?.city || "",
+//         };
+//       }
+
+//       const jobName = replacePlaceholders(job.jobname, placeholderData);
+//       const jobDescription = replacePlaceholders(job.description, placeholderData);
+
+//       jobList.push({
+//         id: job._id,
+//         Name: jobName,
+//         JobAssignee: jobAssigneeNames,
+//         Pipeline: pipeline ? pipeline.pipelineName : null,
+//         Stage: stageNames,
+//         Account: accountsname,
+//         AccountId: accountId,
+//         visibilityForClient:job.showinclientportal,
+//         ClientFacingStatus: clientFacingStatus,
+//         StartDate: job.startdate,
+//         DueDate: job.enddate,
+//         Priority: job.priority,
+//         Description: jobDescription,
+//         StartsIn: job.startsin ? `${job.startsin} ${job.startsinduration}` : null,
+//         DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
+//         createdAt: job.createdAt,
+//         updatedAt: job.updatedAt,
+//       });
+//     }
+
+//     res.status(200).json({ message: "JobTemplate retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 // jobassignees
+// const getActiveJobListByUserid = async (req, res) => {
+//   try {
+//     const { userid,isActive } = req.params;
+//     const jobs = await Job.find({ jobassignees:userid,active: isActive })
+//       .populate({ path: "accounts", model: "Accounts" })
+//       .populate({
+//         path: "pipeline",
+//         model: "pipeline",
+//         populate: { path: "stages", model: "stage" },
+//       })
+//       .populate({ path: "jobassignees", model: "User" })
+//       .populate({ path: "clientfacingstatus", model: "ClientFacingjobStatus" })
+//       .sort({ createdAt: -1 });
+
+//     const jobList = [];
+
+//     for (const job of jobs) {
+//       const pipeline = await Pipeline.findById(job.pipeline);
+//       if (!pipeline) continue;
+
+//       const jobAssigneeNames = job.jobassignees.map(
+//         (assignee) => assignee.username
+//       );
+
+//       const accountsname = job.accounts.map((account) => account.accountName);
+//       const accountId = job.accounts.map((account) => account._id);
+
+//       // const account = await Accounts.findById(accountId).populate("contacts");
+
+//       // // Filter only contacts that have login access
+//       // const validContacts = account.contacts.filter((contact) => contact.login);
+//          // const account = await Accounts.findById(accountId).populate("contacts");
+//          const account = await Accounts.find({ _id: { $in: accountId } }).populate("contacts");
+//          // Filter only contacts that have login access
+//          // const validContacts = account.contacts.filter((contact) => contact.login);
+//     // Collect valid contacts
+//     const validContacts = account.flatMap((account) => 
+//      account.contacts ? account.contacts.filter((contact) => contact.login) : []
+//    );
+
+//       let stageNames = null;
+//       if (Array.isArray(job.stageid)) {
+//         stageNames = job.stageid
+//           .map((stageId) =>
+//             pipeline.stages.find((stage) => stage._id.equals(stageId))
+//           )
+//           .filter(Boolean)
+//           .map((stage) => stage.name);
+//       } else {
+//         const matchedStage = pipeline.stages.find((stage) =>
+//           stage._id.equals(job.stageid)
+//         );
+//         stageNames = matchedStage ? [matchedStage.name] : null;
+//       }
+
+//       const clientFacingStatus = job.clientfacingstatus
+//         ? {
+//             statusId: job.clientfacingstatus._id,
+//             statusName: job.clientfacingstatus.clientfacingName,
+//             statusColor: job.clientfacingstatus.clientfacingColour,
+//           }
+//         : null;
+
+//       const commonPlaceholders = {
+//         ACCOUNT_NAME: accountsname.join(", "),
+//         CURRENT_DAY_FULL_DATE: currentFullDate,
+//         CURRENT_DAY_NUMBER: currentDayNumber,
+//         CURRENT_DAY_NAME: currentDayName,
+//         CURRENT_WEEK: currentWeek,
+//         CURRENT_MONTH_NUMBER: currentMonthNumber,
+//         CURRENT_MONTH_NAME: currentMonthName,
+//         CURRENT_QUARTER: currentQuarter,
+//         CURRENT_YEAR: currentYear,
+//         LAST_DAY_FULL_DATE: lastDayFullDate,
+//         LAST_DAY_NUMBER: lastDayNumber,
+//         LAST_DAY_NAME: lastDayName,
+//         LAST_WEEK: lastWeek,
+//         LAST_MONTH_NUMBER: lastMonthNumber,
+//         LAST_MONTH_NAME: lastMonthName,
+//         LAST_QUARTER: lastQuarter,
+//         LAST_YEAR: lastYear,
+//         NEXT_DAY_FULL_DATE: nextDayFullDate,
+//         NEXT_DAY_NUMBER: nextDayNumber,
+//         NEXT_DAY_NAME: nextDayName,
+//         NEXT_WEEK: nextWeek,
+//         NEXT_MONTH_NUMBER: nextMonthNumber,
+//         NEXT_MONTH_NAME: nextMonthName,
+//         NEXT_QUARTER: nextQuarter,
+//         NEXT_YEAR: nextYear,
+//       };
+
+//       let placeholderData = { ...commonPlaceholders };
+
+//       if (validContacts.length > 0) {
+//         // Pick the first valid contact to use for placeholders
+//         const firstContact = await Contacts.findById(validContacts[0]._id);
+//         placeholderData = {
+//           ...commonPlaceholders,
+//           FIRST_NAME: firstContact?.firstName || "",
+//           MIDDLE_NAME: firstContact?.middleName || "",
+//           LAST_NAME: firstContact?.lastName || "",
+//           CONTACT_NAME: firstContact?.contactName || "",
+//           COMPANY_NAME: firstContact?.companyName || "",
+//           COUNTRY: firstContact?.country || "",
+//           STREET_ADDRESS: firstContact?.streetAddress || "",
+//           STATEPROVINCE: firstContact?.state || "",
+//           PHONE_NUMBER: firstContact?.phoneNumbers || "",
+//           ZIPPOSTALCODE: firstContact?.postalCode || "",
+//           CITY: firstContact?.city || "",
+//         };
+//       }
+
+//       const jobName = replacePlaceholders(job.jobname, placeholderData);
+//       const jobDescription = replacePlaceholders(job.description, placeholderData);
+
+//       jobList.push({
+//         id: job._id,
+//         Name: jobName,
+//         JobAssignee: jobAssigneeNames,
+//         Pipeline: pipeline ? pipeline.pipelineName : null,
+//         Stage: stageNames,
+//         Account: accountsname,
+//         AccountId: accountId,
+//         ClientFacingStatus: clientFacingStatus,
+//         StartDate: job.startdate,
+//         DueDate: job.enddate,
+//         Priority: job.priority,
+//         Description: jobDescription,
+//         StartsIn: job.startsin ? `${job.startsin} ${job.startsinduration}` : null,
+//         DueIn: job.duein ? `${job.duein} ${job.dueinduration}` : null,
+//         createdAt: job.createdAt,
+//         updatedAt: job.updatedAt,
+//       });
+//     }
+
+//     res.status(200).json({ message: "JobTemplate retrieved successfully", jobList });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const getActiveJobListByUserid = async (req, res) => {
   try {
-    const { userid,isActive } = req.params;
-    const jobs = await Job.find({ jobassignees:userid,active: isActive })
+    const { userid, isActive } = req.params;
+    const jobs = await Job.find({ jobassignees: userid, active: isActive })
       .populate({ path: "accounts", model: "Accounts" })
       .populate({
         path: "pipeline",
@@ -650,6 +987,46 @@ const getActiveJobListByUserid = async (req, res) => {
 
     const jobList = [];
 
+    // ✅ Build date placeholders once
+    const currentDate = new Date();
+    const lastDay = new Date(currentDate);
+    lastDay.setDate(lastDay.getDate() - 1);
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const commonPlaceholders = {
+      CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString("en-US"),
+      CURRENT_DAY_NUMBER: currentDate.getDate(),
+      CURRENT_DAY_NAME: currentDate.toLocaleDateString("en-US", { weekday: "long" }),
+      CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+      CURRENT_MONTH_NAME: currentDate.toLocaleDateString("en-US", { month: "long" }),
+      CURRENT_QUARTER: Math.floor((currentDate.getMonth() + 3) / 3),
+      CURRENT_YEAR: currentDate.getFullYear(),
+
+      LAST_DAY_FULL_DATE: lastDay.toLocaleDateString("en-US"),
+      LAST_DAY_NUMBER: lastDay.getDate(),
+      LAST_DAY_NAME: lastDay.toLocaleDateString("en-US", { weekday: "long" }),
+      LAST_MONTH_NUMBER: lastDay.getMonth() + 1,
+      LAST_MONTH_NAME: lastDay.toLocaleDateString("en-US", { month: "long" }),
+      LAST_QUARTER: Math.floor((lastDay.getMonth() + 3) / 3),
+      LAST_YEAR: lastDay.getFullYear(),
+
+      NEXT_DAY_FULL_DATE: nextDay.toLocaleDateString("en-US"),
+      NEXT_DAY_NUMBER: nextDay.getDate(),
+      NEXT_DAY_NAME: nextDay.toLocaleDateString("en-US", { weekday: "long" }),
+      NEXT_MONTH_NUMBER: nextDay.getMonth() + 1,
+      NEXT_MONTH_NAME: nextDay.toLocaleDateString("en-US", { month: "long" }),
+      NEXT_QUARTER: Math.floor((nextDay.getMonth() + 3) / 3),
+      NEXT_YEAR: nextDay.getFullYear(),
+    };
+
+    // ✅ helper to replace placeholders
+    const replacePlaceholders = (template, data) => {
+      return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
+        return data[placeholder.trim()] || "";
+      });
+    };
+
     for (const job of jobs) {
       const pipeline = await Pipeline.findById(job.pipeline);
       if (!pipeline) continue;
@@ -660,19 +1037,6 @@ const getActiveJobListByUserid = async (req, res) => {
 
       const accountsname = job.accounts.map((account) => account.accountName);
       const accountId = job.accounts.map((account) => account._id);
-
-      // const account = await Accounts.findById(accountId).populate("contacts");
-
-      // // Filter only contacts that have login access
-      // const validContacts = account.contacts.filter((contact) => contact.login);
-         // const account = await Accounts.findById(accountId).populate("contacts");
-         const account = await Accounts.find({ _id: { $in: accountId } }).populate("contacts");
-         // Filter only contacts that have login access
-         // const validContacts = account.contacts.filter((contact) => contact.login);
-    // Collect valid contacts
-    const validContacts = account.flatMap((account) => 
-     account.contacts ? account.contacts.filter((contact) => contact.login) : []
-   );
 
       let stageNames = null;
       if (Array.isArray(job.stageid)) {
@@ -697,57 +1061,14 @@ const getActiveJobListByUserid = async (req, res) => {
           }
         : null;
 
-      const commonPlaceholders = {
+      // ✅ Only account + dates (no contacts)
+      const finalPlaceholders = {
+        ...commonPlaceholders,
         ACCOUNT_NAME: accountsname.join(", "),
-        CURRENT_DAY_FULL_DATE: currentFullDate,
-        CURRENT_DAY_NUMBER: currentDayNumber,
-        CURRENT_DAY_NAME: currentDayName,
-        CURRENT_WEEK: currentWeek,
-        CURRENT_MONTH_NUMBER: currentMonthNumber,
-        CURRENT_MONTH_NAME: currentMonthName,
-        CURRENT_QUARTER: currentQuarter,
-        CURRENT_YEAR: currentYear,
-        LAST_DAY_FULL_DATE: lastDayFullDate,
-        LAST_DAY_NUMBER: lastDayNumber,
-        LAST_DAY_NAME: lastDayName,
-        LAST_WEEK: lastWeek,
-        LAST_MONTH_NUMBER: lastMonthNumber,
-        LAST_MONTH_NAME: lastMonthName,
-        LAST_QUARTER: lastQuarter,
-        LAST_YEAR: lastYear,
-        NEXT_DAY_FULL_DATE: nextDayFullDate,
-        NEXT_DAY_NUMBER: nextDayNumber,
-        NEXT_DAY_NAME: nextDayName,
-        NEXT_WEEK: nextWeek,
-        NEXT_MONTH_NUMBER: nextMonthNumber,
-        NEXT_MONTH_NAME: nextMonthName,
-        NEXT_QUARTER: nextQuarter,
-        NEXT_YEAR: nextYear,
       };
 
-      let placeholderData = { ...commonPlaceholders };
-
-      if (validContacts.length > 0) {
-        // Pick the first valid contact to use for placeholders
-        const firstContact = await Contacts.findById(validContacts[0]._id);
-        placeholderData = {
-          ...commonPlaceholders,
-          FIRST_NAME: firstContact?.firstName || "",
-          MIDDLE_NAME: firstContact?.middleName || "",
-          LAST_NAME: firstContact?.lastName || "",
-          CONTACT_NAME: firstContact?.contactName || "",
-          COMPANY_NAME: firstContact?.companyName || "",
-          COUNTRY: firstContact?.country || "",
-          STREET_ADDRESS: firstContact?.streetAddress || "",
-          STATEPROVINCE: firstContact?.state || "",
-          PHONE_NUMBER: firstContact?.phoneNumbers || "",
-          ZIPPOSTALCODE: firstContact?.postalCode || "",
-          CITY: firstContact?.city || "",
-        };
-      }
-
-      const jobName = replacePlaceholders(job.jobname, placeholderData);
-      const jobDescription = replacePlaceholders(job.description, placeholderData);
+      const jobName = replacePlaceholders(job.jobname, finalPlaceholders);
+      const jobDescription = replacePlaceholders(job.description, finalPlaceholders);
 
       jobList.push({
         id: job._id,
@@ -774,7 +1095,6 @@ const getActiveJobListByUserid = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 
 const getActiveJobListbyAccountId = async (req, res) => {
@@ -825,16 +1145,16 @@ const getActiveJobListbyAccountId = async (req, res) => {
 
       // Fetch account and associated contacts
       const account = await Accounts.findById(accountId).populate("contacts");
-      const validContacts = account.contacts.filter((contact) => contact.login);
+      // const validContacts = account.contacts.filter((contact) => contact.login);
 
-      if (validContacts.length === 0) {
-        return res
-          .status(400)
-          .json({ status: 400, message: "No contacts with login enabled." });
-      }
+      // if (validContacts.length === 0) {
+      //   return res
+      //     .status(400)
+      //     .json({ status: 400, message: "No contacts with login enabled." });
+      // }
 
       // Select the first valid contact (to prevent duplication)
-      const contact = validContacts[0];
+      // const contact = validContacts[0];
 
       // Extract client-facing status
       const clientFacingStatus = job.clientfacingstatus
@@ -848,17 +1168,17 @@ const getActiveJobListbyAccountId = async (req, res) => {
       // Data for placeholder replacement
       const placeholderData = {
         ACCOUNT_NAME: accountsname.join(", "),
-        FIRST_NAME: contact.firstName,
-        MIDDLE_NAME: contact.middleName,
-        LAST_NAME: contact.lastName,
-        CONTACT_NAME: contact.contactName,
-        COMPANY_NAME: contact.companyName,
-        COUNTRY: contact.country,
-        STREET_ADDRESS: contact.streetAddress,
-        STATEPROVINCE: contact.state,
-        PHONE_NUMBER: contact.phoneNumbers,
-        ZIPPOSTALCODE: contact.postalCode,
-        CITY: contact.city,
+        // FIRST_NAME: contact.firstName,
+        // MIDDLE_NAME: contact.middleName,
+        // LAST_NAME: contact.lastName,
+        // CONTACT_NAME: contact.contactName,
+        // COMPANY_NAME: contact.companyName,
+        // COUNTRY: contact.country,
+        // STREET_ADDRESS: contact.streetAddress,
+        // STATEPROVINCE: contact.state,
+        // PHONE_NUMBER: contact.phoneNumbers,
+        // ZIPPOSTALCODE: contact.postalCode,
+        // CITY: contact.city,
         CURRENT_DAY_FULL_DATE: currentFullDate,
         CURRENT_DAY_NUMBER: currentDayNumber,
         CURRENT_DAY_NAME: currentDayName,

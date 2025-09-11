@@ -586,21 +586,21 @@ const getTaskList = async (req, res) => {
         if (account) {
           accountName = account.accountName || "";
           accountId = account._id;
-          const validContact = account.contacts.filter((contact) => contact.login);
+          // const validContact = account.contacts.filter((contact) => contact.login);
 
           placeholderValues = {
             ACCOUNT_NAME: account?.accountName || "",
-            FIRST_NAME: validContact[0]?.firstName || "",
-            MIDDLE_NAME: validContact[0]?.middleName || "",
-            LAST_NAME: validContact[0]?.lastName || "",
-            CONTACT_NAME: validContact[0]?.contactName || "",
-            COMPANY_NAME: validContact[0]?.companyName || "",
-            COUNTRY: validContact[0]?.country || "",
-            STREET_ADDRESS: validContact[0]?.streetAddress || "",
-            STATEPROVINCE: validContact[0]?.state || "",
-            PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-            ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-            CITY: validContact[0]?.city || "",
+            // FIRST_NAME: validContact[0]?.firstName || "",
+            // MIDDLE_NAME: validContact[0]?.middleName || "",
+            // LAST_NAME: validContact[0]?.lastName || "",
+            // CONTACT_NAME: validContact[0]?.contactName || "",
+            // COMPANY_NAME: validContact[0]?.companyName || "",
+            // COUNTRY: validContact[0]?.country || "",
+            // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+            // STATEPROVINCE: validContact[0]?.state || "",
+            // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+            // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+            // CITY: validContact[0]?.city || "",
             CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
             CURRENT_DAY_NUMBER: currentDate.getDate(),
             CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
@@ -1034,21 +1034,21 @@ const getsTaskListById = async (req, res) => {
 
       if (account) {
         accountName = account.accountName || "";
-        const validContact = account.contacts.filter((contact) => contact.login);
+        // const validContact = account.contacts.filter((contact) => contact.login);
 
         placeholderValues = {
           ACCOUNT_NAME: account?.accountName || "",
-          FIRST_NAME: validContact[0]?.firstName || "",
-          MIDDLE_NAME: validContact[0]?.middleName || "",
-          LAST_NAME: validContact[0]?.lastName || "",
-          CONTACT_NAME: validContact[0]?.contactName || "",
-          COMPANY_NAME: validContact[0]?.companyName || "",
-          COUNTRY: validContact[0]?.country || "",
-          STREET_ADDRESS: validContact[0]?.streetAddress || "",
-          STATEPROVINCE: validContact[0]?.state || "",
-          PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-          ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-          CITY: validContact[0]?.city || "",
+          // FIRST_NAME: validContact[0]?.firstName || "",
+          // MIDDLE_NAME: validContact[0]?.middleName || "",
+          // LAST_NAME: validContact[0]?.lastName || "",
+          // CONTACT_NAME: validContact[0]?.contactName || "",
+          // COMPANY_NAME: validContact[0]?.companyName || "",
+          // COUNTRY: validContact[0]?.country || "",
+          // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+          // STATEPROVINCE: validContact[0]?.state || "",
+          // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+          // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+          // CITY: validContact[0]?.city || "",
           CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
           CURRENT_DAY_NUMBER: currentDate.getDate(),
           CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
@@ -1367,21 +1367,21 @@ const getCompleteTaskList = async (req, res) => {
         if (account) {
           accountName = account.accountName || "";
           accountId = account._id;
-          const validContact = account.contacts.filter((contact) => contact.login);
+          // const validContact = account.contacts.filter((contact) => contact.login);
 
           placeholderValues = {
             ACCOUNT_NAME: account?.accountName || "",
-            FIRST_NAME: validContact[0]?.firstName || "",
-            MIDDLE_NAME: validContact[0]?.middleName || "",
-            LAST_NAME: validContact[0]?.lastName || "",
-            CONTACT_NAME: validContact[0]?.contactName || "",
-            COMPANY_NAME: validContact[0]?.companyName || "",
-            COUNTRY: validContact[0]?.country || "",
-            STREET_ADDRESS: validContact[0]?.streetAddress || "",
-            STATEPROVINCE: validContact[0]?.state || "",
-            PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-            ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-            CITY: validContact[0]?.city || "",
+            // FIRST_NAME: validContact[0]?.firstName || "",
+            // MIDDLE_NAME: validContact[0]?.middleName || "",
+            // LAST_NAME: validContact[0]?.lastName || "",
+            // CONTACT_NAME: validContact[0]?.contactName || "",
+            // COMPANY_NAME: validContact[0]?.companyName || "",
+            // COUNTRY: validContact[0]?.country || "",
+            // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+            // STATEPROVINCE: validContact[0]?.state || "",
+            // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+            // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+            // CITY: validContact[0]?.city || "",
             CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
             CURRENT_DAY_NUMBER: new Date().getDate(),
             CURRENT_DAY_NAME: new Date().toLocaleString("default", { weekday: "long" }),
@@ -1708,21 +1708,21 @@ const getTaskListByAccountId = async (req, res) => {
         if (account) {
           accountName = account.accountName || "";
           accountId = account._id;
-          const validContact = account.contacts.filter((contact) => contact.login);
+          // const validContact = account.contacts.filter((contact) => contact.login);
 
           placeholderValues = {
             ACCOUNT_NAME: account?.accountName || "",
-            FIRST_NAME: validContact[0]?.firstName || "",
-            MIDDLE_NAME: validContact[0]?.middleName || "",
-            LAST_NAME: validContact[0]?.lastName || "",
-            CONTACT_NAME: validContact[0]?.contactName || "",
-            COMPANY_NAME: validContact[0]?.companyName || "",
-            COUNTRY: validContact[0]?.country || "",
-            STREET_ADDRESS: validContact[0]?.streetAddress || "",
-            STATEPROVINCE: validContact[0]?.state || "",
-            PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-            ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-            CITY: validContact[0]?.city || "",
+            // FIRST_NAME: validContact[0]?.firstName || "",
+            // MIDDLE_NAME: validContact[0]?.middleName || "",
+            // LAST_NAME: validContact[0]?.lastName || "",
+            // CONTACT_NAME: validContact[0]?.contactName || "",
+            // COMPANY_NAME: validContact[0]?.companyName || "",
+            // COUNTRY: validContact[0]?.country || "",
+            // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+            // STATEPROVINCE: validContact[0]?.state || "",
+            // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+            // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+            // CITY: validContact[0]?.city || "",
             CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
             CURRENT_DAY_NUMBER: currentDate.getDate(),
             CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
@@ -1868,21 +1868,21 @@ const getCompleteTaskListByAccount = async (req, res) => {
           if (account) {
             accountName = account.accountName || "";
             accountId = account._id;
-            const validContact = account.contacts.filter((contact) => contact.login);
+            // const validContact = account.contacts.filter((contact) => contact.login);
   
             placeholderValues = {
               ACCOUNT_NAME: account?.accountName || "",
-              FIRST_NAME: validContact[0]?.firstName || "",
-              MIDDLE_NAME: validContact[0]?.middleName || "",
-              LAST_NAME: validContact[0]?.lastName || "",
-              CONTACT_NAME: validContact[0]?.contactName || "",
-              COMPANY_NAME: validContact[0]?.companyName || "",
-              COUNTRY: validContact[0]?.country || "",
-              STREET_ADDRESS: validContact[0]?.streetAddress || "",
-              STATEPROVINCE: validContact[0]?.state || "",
-              PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-              ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-              CITY: validContact[0]?.city || "",
+              // FIRST_NAME: validContact[0]?.firstName || "",
+              // MIDDLE_NAME: validContact[0]?.middleName || "",
+              // LAST_NAME: validContact[0]?.lastName || "",
+              // CONTACT_NAME: validContact[0]?.contactName || "",
+              // COMPANY_NAME: validContact[0]?.companyName || "",
+              // COUNTRY: validContact[0]?.country || "",
+              // STREET_ADDRESS: validContact[0]?.streetAddress || "",
+              // STATEPROVINCE: validContact[0]?.state || "",
+              // PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+              // ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+              // CITY: validContact[0]?.city || "",
               CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
               CURRENT_DAY_NUMBER: new Date().getDate(),
               CURRENT_DAY_NAME: new Date().toLocaleString("default", { weekday: "long" }),

@@ -73,25 +73,6 @@ const getAllChats = async (req, res) => {
   }
 };
 
-// Get a single ChatTemplate
-// const getChats = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         const accountChats = await AccountwiseChat.findById(id)
-//             .populate({ path: 'accountid', model: 'Accounts' })
-//             // .populate({ path: 'chattemplateid', model: 'ChatTemplate' });
-
-//         if (!accountChats) {
-//             return res.status(404).json({ message: 'Chat not found' });
-//         }
-
-//         res.status(200).json({ message: "Chats Accountwise retrieved successfully", accountChats });
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-
 const getChats = async (req, res) => {
   try {
     const { id } = req.params;
@@ -108,42 +89,23 @@ const getChats = async (req, res) => {
       return res.status(404).json({ error: "Chat not found" });
     }
 
-    // Fetch account details and populate contacts
-    const account = await Accounts.findById(chat.accountid._id).populate(
-      "contacts"
-    );
+    // Fetch only account details
+    const account = await Accounts.findById(chat.accountid._id);
     if (!account) {
       return res.status(404).json({ error: "Associated account not found" });
     }
 
-    // Filter contacts with login
-    const validContact = account.contacts.filter((contact) => contact.login);
-
-    // Get placeholder values
+    // Date calculations
     const currentDate = new Date();
+
     const placeholderValues = {
       ACCOUNT_NAME: account.accountName || "",
-      FIRST_NAME: validContact[0]?.firstName || "",
-      MIDDLE_NAME: validContact[0]?.middleName || "",
-      LAST_NAME: validContact[0]?.lastName || "",
-      CONTACT_NAME: validContact[0]?.contactName || "",
-      COMPANY_NAME: validContact[0]?.companyName || "",
-      COUNTRY: validContact[0]?.country || "",
-      STREET_ADDRESS: validContact[0]?.streetAddress || "",
-      STATEPROVINCE: validContact[0]?.state || "",
-      PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-      ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-      CITY: validContact[0]?.city || "",
-      CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-      CURRENT_DAY_NUMBER: new Date().getDate(),
-      CURRENT_DAY_NAME: new Date().toLocaleString("default", {
-        weekday: "long",
-      }),
-      CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-      CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
-        month: "long",
-      }),
-      CURRENT_YEAR: new Date().getFullYear(),
+      CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
+      CURRENT_DAY_NUMBER: currentDate.getDate(),
+      CURRENT_DAY_NAME: currentDate.toLocaleString("default", { weekday: "long" }),
+      CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+      CURRENT_MONTH_NAME: currentDate.toLocaleString("default", { month: "long" }),
+      CURRENT_YEAR: currentDate.getFullYear(),
       LAST_DAY_FULL_DATE: lastDayFullDate,
       LAST_DAY_NUMBER: lastDayNumber,
       LAST_DAY_NAME: lastDayName,
@@ -164,16 +126,10 @@ const getChats = async (req, res) => {
 
     // Replace placeholders in subject
     const replacePlaceholders = (template, data) => {
-      return template.replace(
-        /\[([\w\s]+)\]/g,
-        (match, key) => data[key.trim()] || ""
-      );
+      return template.replace(/\[([\w\s]+)\]/g, (match, key) => data[key.trim()] || "");
     };
 
-    chat.chatsubject = replacePlaceholders(
-      chat.chatsubject || "",
-      placeholderValues
-    );
+    chat.chatsubject = replacePlaceholders(chat.chatsubject || "", placeholderValues);
 
     if (Array.isArray(chat.description)) {
       chat.description = chat.description.map((desc) => ({
@@ -187,6 +143,103 @@ const getChats = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// const getChats = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const chat = await AccountwiseChat.findById(id)
+//       .populate({
+//         path: "accountid",
+//         model: "Accounts",
+//       })
+//       .populate({ path: "description.senderid", model: "User" });
+//     // .populate({ path: 'chattemplateid', model: 'ChatTemplate' });
+
+//     if (!chat) {
+//       return res.status(404).json({ error: "Chat not found" });
+//     }
+
+//     // Fetch account details and populate contacts
+//     const account = await Accounts.findById(chat.accountid._id).populate(
+//       "contacts"
+//     );
+//     if (!account) {
+//       return res.status(404).json({ error: "Associated account not found" });
+//     }
+
+//     // Filter contacts with login
+//     const validContact = account.contacts.filter((contact) => contact.login);
+
+//     // Get placeholder values
+//     const currentDate = new Date();
+//     const placeholderValues = {
+//       ACCOUNT_NAME: account.accountName || "",
+//       FIRST_NAME: validContact[0]?.firstName || "",
+//       MIDDLE_NAME: validContact[0]?.middleName || "",
+//       LAST_NAME: validContact[0]?.lastName || "",
+//       CONTACT_NAME: validContact[0]?.contactName || "",
+//       COMPANY_NAME: validContact[0]?.companyName || "",
+//       COUNTRY: validContact[0]?.country || "",
+//       STREET_ADDRESS: validContact[0]?.streetAddress || "",
+//       STATEPROVINCE: validContact[0]?.state || "",
+//       PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+//       ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+//       CITY: validContact[0]?.city || "",
+//       CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
+//       CURRENT_DAY_NUMBER: new Date().getDate(),
+//       CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//         weekday: "long",
+//       }),
+//       CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
+//       CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//         month: "long",
+//       }),
+//       CURRENT_YEAR: new Date().getFullYear(),
+//       LAST_DAY_FULL_DATE: lastDayFullDate,
+//       LAST_DAY_NUMBER: lastDayNumber,
+//       LAST_DAY_NAME: lastDayName,
+//       LAST_WEEK: lastWeek,
+//       LAST_MONTH_NUMBER: lastMonthNumber,
+//       LAST_MONTH_NAME: lastMonthName,
+//       LAST_QUARTER: lastQuarter,
+//       LAST_YEAR: lastYear,
+//       NEXT_DAY_FULL_DATE: nextDayFullDate,
+//       NEXT_DAY_NUMBER: nextDayNumber,
+//       NEXT_DAY_NAME: nextDayName,
+//       NEXT_WEEK: nextWeek,
+//       NEXT_MONTH_NUMBER: nextMonthNumber,
+//       NEXT_MONTH_NAME: nextMonthName,
+//       NEXT_QUARTER: nextQuarter,
+//       NEXT_YEAR: nextYear,
+//     };
+
+//     // Replace placeholders in subject
+//     const replacePlaceholders = (template, data) => {
+//       return template.replace(
+//         /\[([\w\s]+)\]/g,
+//         (match, key) => data[key.trim()] || ""
+//       );
+//     };
+
+//     chat.chatsubject = replacePlaceholders(
+//       chat.chatsubject || "",
+//       placeholderValues
+//     );
+
+//     if (Array.isArray(chat.description)) {
+//       chat.description = chat.description.map((desc) => ({
+//         ...desc,
+//         message: replacePlaceholders(desc.message || "", placeholderValues),
+//       }));
+//     }
+
+//     res.status(200).json({ message: "Chat retrieved successfully", chat });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 // POST a new ChatTemplate
 
@@ -395,8 +448,8 @@ const updateChatFromClient = async (req, res) => {
         populate: {
           path: "adminUserId",
           model: "User",
-          select: "emailSyncEmail email username"
-        }
+          select: "emailSyncEmail email username",
+        },
       })
       .lean();
 
@@ -406,41 +459,29 @@ const updateChatFromClient = async (req, res) => {
 
     // Step 2: Update description field directly using $push
     await AccountwiseChat.findByIdAndUpdate(id, {
-      $push: { description: { $each: newDescriptions } }
+      $push: { description: { $each: newDescriptions } },
     });
 
-    // Step 3: Fetch associated account and contacts
-    const account = await Accounts.findById(chat.accountid._id).populate("contacts");
-
+    // Step 3: Fetch only account details
+    const account = await Accounts.findById(chat.accountid._id);
     if (!account) {
       return res.status(404).json({ error: "Associated account not found" });
     }
 
-    const validContact = account.contacts.filter((contact) => contact.login);
-
+    // Step 4: Placeholder values (only account + dates)
+    const currentDate = new Date();
     const placeholderValues = {
       ACCOUNT_NAME: account.accountName || "",
-      FIRST_NAME: validContact[0]?.firstName || "",
-      MIDDLE_NAME: validContact[0]?.middleName || "",
-      LAST_NAME: validContact[0]?.lastName || "",
-      CONTACT_NAME: validContact[0]?.contactName || "",
-      COMPANY_NAME: validContact[0]?.companyName || "",
-      COUNTRY: validContact[0]?.country || "",
-      STREET_ADDRESS: validContact[0]?.streetAddress || "",
-      STATEPROVINCE: validContact[0]?.state || "",
-      PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-      ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-      CITY: validContact[0]?.city || "",
-      CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-      CURRENT_DAY_NUMBER: new Date().getDate(),
-      CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+      CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
+      CURRENT_DAY_NUMBER: currentDate.getDate(),
+      CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
         weekday: "long",
       }),
-      CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-      CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+      CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+      CURRENT_MONTH_NAME: currentDate.toLocaleString("default", {
         month: "long",
       }),
-      CURRENT_YEAR: new Date().getFullYear(),
+      CURRENT_YEAR: currentDate.getFullYear(),
       LAST_DAY_FULL_DATE: lastDayFullDate,
       LAST_DAY_NUMBER: lastDayNumber,
       LAST_DAY_NAME: lastDayName,
@@ -459,12 +500,9 @@ const updateChatFromClient = async (req, res) => {
       NEXT_YEAR: nextYear,
     };
 
-    // Replace placeholders in subject
+    // Step 5: Replace placeholders
     const replacePlaceholders = (template, data) => {
-      return template.replace(
-        /\[([\w\s]+)\]/g,
-        (match, key) => data[key.trim()] || ""
-      );
+      return template.replace(/\[([\w\s]+)\]/g, (match, key) => data[key.trim()] || "");
     };
 
     const clientMessage = newDescriptions[0]?.message || "No content";
@@ -476,9 +514,9 @@ const updateChatFromClient = async (req, res) => {
     const adminEmail =
       chat.accountid?.adminUserId?.emailSyncEmail ||
       chat.accountid?.adminUserId?.email ||
-      null; // <-- fallback check
+      null;
 
-    // Step 5: Send email only if adminEmail is present
+    // Step 6: Send email only if adminEmail is present
     if (adminEmail) {
       await transporter.sendMail({
         from: `<${process.env.EMAIL}>`,
@@ -495,7 +533,7 @@ const updateChatFromClient = async (req, res) => {
     res.status(200).json({
       message: adminEmail
         ? "Message saved and email sent to admin"
-        : "Message sent ",
+        : "Message sent",
       updatedChat: {
         _id: id,
         newDescriptions,
@@ -551,7 +589,7 @@ const updateChatFromClient = async (req, res) => {
 
 //     const validContact = account.contacts.filter((contact) => contact.login);
 
-//         const placeholderValues = {
+//     const placeholderValues = {
 //       ACCOUNT_NAME: account.accountName || "",
 //       FIRST_NAME: validContact[0]?.firstName || "",
 //       MIDDLE_NAME: validContact[0]?.middleName || "",
@@ -601,36 +639,45 @@ const updateChatFromClient = async (req, res) => {
 //     };
 
 //     const clientMessage = newDescriptions[0]?.message || "No content";
-//     const subject = replacePlaceholders(chat.chatsubject || "", placeholderValues) || "New Chat Message";
+//     const subject =
+//       replacePlaceholders(chat.chatsubject || "", placeholderValues) ||
+//       "New Chat Message";
 //     const accountName = chat.accountid?.accountName || "Unknown Account";
 //     const clientId = chat.accountid?._id;
-//     const adminEmail = chat.accountid?.adminUserId?.emailSyncEmail || "Unknown";
+//     const adminEmail =
+//       chat.accountid?.adminUserId?.emailSyncEmail ||
+//       chat.accountid?.adminUserId?.email ||
+//       null; // <-- fallback check
 
-//     // Step 5: Send email
-//     await transporter.sendMail({
-//       from: `<${process.env.EMAIL}>`,
-//       to: adminEmail,
-//       subject: `#${clientId} New message ${subject} from ${accountName}`,
-//       html: `
-//         <p><strong>Subject:</strong> ${subject}</p>
-//         <p><strong>Account:</strong> ${accountName}</p>
-//         <p><strong>Message:</strong><br/>${clientMessage}</p>
-//       `,
-//     });
+//     // Step 5: Send email only if adminEmail is present
+//     if (adminEmail) {
+//       await transporter.sendMail({
+//         from: `<${process.env.EMAIL}>`,
+//         to: adminEmail,
+//         subject: `#${clientId} New message ${subject} from ${accountName}`,
+//         html: `
+//           <p><strong>Subject:</strong> ${subject}</p>
+//           <p><strong>Account:</strong> ${accountName}</p>
+//           <p><strong>Message:</strong><br/>${clientMessage}</p>
+//         `,
+//       });
+//     }
 
 //     res.status(200).json({
-//       message: "Message saved and email sent to admin",
+//       message: adminEmail
+//         ? "Message saved and email sent to admin"
+//         : "Message sent ",
 //       updatedChat: {
 //         _id: id,
-//         newDescriptions
-//       }
+//         newDescriptions,
+//       },
 //     });
-
 //   } catch (error) {
 //     console.error("Error sending email:", error);
 //     res.status(500).json({ error: error.message });
 //   }
 // };
+
 
 
 // Get ChatTemplates with filters (accountid, active)
@@ -654,25 +701,8 @@ const getchatAccountwiselist = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// Get ChatTemplates with filters (accountid, active)
-// const getisactivechatAccountwise = async (req, res) => {
-//     try {
-//         const { accountid, isactive } = req.params;
-
-//         const chataccountwise = await AccountwiseChat.find({ accountid: accountid, active: isactive })
-//             .populate({ path: 'accountid', model: 'Accounts' })
-//             .populate({ path: 'chattemplateid', model: 'ChatTemplate' });
-
-//         res.status(200).json({ message: "Chats Accountwise retrieved successfully", chataccountwise });
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-
 const getisactivechatAccountwise = async (req, res) => {
   try {
-    // console.log(req.params.accountid);
     const chataccountwise = await AccountwiseChat.find({
       accountid: req.params.accountid,
       active: req.params.isactive,
@@ -689,47 +719,27 @@ const getisactivechatAccountwise = async (req, res) => {
     // Function to process chat data
     const processChatData = async (chataccountwise) => {
       for (const chat of chataccountwise) {
-        // console.log(chat.accountid._id);
-
-        // Fetch account details and populate contacts
-        const account = await Accounts.findById(chat.accountid._id).populate(
-          "contacts"
-        );
+        // Fetch only account details
+        const account = await Accounts.findById(chat.accountid._id);
         if (!account) {
           console.error(`Account not found for ID: ${chat.accountid._id}`);
-          continue; // Skip processing this chat if account is not found
+          continue;
         }
 
-        // Filter contacts with emailSync enabled
-        const validContact = account.contacts.filter(
-          (contact) => contact.login
-        );
-        // console.log(validContact);
-
-        // Define placeholder values
+        // Define placeholder values (account + dates only)
+        const currentDate = new Date();
         const placeholderValues = {
           ACCOUNT_NAME: account.accountName || "",
-          FIRST_NAME: validContact[0]?.firstName || "",
-          MIDDLE_NAME: validContact[0]?.middleName || "",
-          LAST_NAME: validContact[0]?.lastName || "",
-          CONTACT_NAME: validContact[0]?.contactName || "",
-          COMPANY_NAME: validContact[0]?.companyName || "",
-          COUNTRY: validContact[0]?.country || "",
-          STREET_ADDRESS: validContact[0]?.streetAddress || "",
-          STATEPROVINCE: validContact[0]?.state || "",
-          PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-          ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-          CITY: validContact[0]?.city || "",
-          CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-          CURRENT_DAY_NUMBER: new Date().getDate(),
-          CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+          CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
+          CURRENT_DAY_NUMBER: currentDate.getDate(),
+          CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
             weekday: "long",
           }),
-          CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-          CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+          CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+          CURRENT_MONTH_NAME: currentDate.toLocaleString("default", {
             month: "long",
           }),
-          CURRENT_YEAR: new Date().getFullYear(),
+          CURRENT_YEAR: currentDate.getFullYear(),
           LAST_DAY_FULL_DATE: lastDayFullDate,
           LAST_DAY_NUMBER: lastDayNumber,
           LAST_DAY_NAME: lastDayName,
@@ -755,12 +765,13 @@ const getisactivechatAccountwise = async (req, res) => {
           });
         };
 
-        // Replace placeholders in the chat subject
+        // Replace placeholders in subject
         chat.chatsubject = replacePlaceholders(
           chat.chatsubject || "",
           placeholderValues
         );
-        // Replace placeholders in the description messages
+
+        // Replace placeholders in description messages
         if (Array.isArray(chat.description)) {
           chat.description = chat.description.map((desc) => ({
             ...desc,
@@ -770,7 +781,6 @@ const getisactivechatAccountwise = async (req, res) => {
       }
     };
 
-    // Call the function to process chat data
     await processChatData(chataccountwise);
 
     res.status(200).json({
@@ -781,6 +791,119 @@ const getisactivechatAccountwise = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// const getisactivechatAccountwise = async (req, res) => {
+//   try {
+//     // console.log(req.params.accountid);
+//     const chataccountwise = await AccountwiseChat.find({
+//       accountid: req.params.accountid,
+//       active: req.params.isactive,
+//     })
+//       .populate({ path: "accountid", model: "Accounts" })
+//       .populate({ path: "chattemplateid", model: "ChatTemplate" })
+//       .populate({ path: "description.senderid", model: "User" })
+//       .sort({ createdAt: -1 });
+
+//     if (!chataccountwise) {
+//       return res.status(404).json({ error: "Chats Accountwise not found" });
+//     }
+
+//     // Function to process chat data
+//     const processChatData = async (chataccountwise) => {
+//       for (const chat of chataccountwise) {
+//         // console.log(chat.accountid._id);
+
+//         // Fetch account details and populate contacts
+//         const account = await Accounts.findById(chat.accountid._id).populate(
+//           "contacts"
+//         );
+//         if (!account) {
+//           console.error(`Account not found for ID: ${chat.accountid._id}`);
+//           continue; // Skip processing this chat if account is not found
+//         }
+
+//         // Filter contacts with emailSync enabled
+//         const validContact = account.contacts.filter(
+//           (contact) => contact.login
+//         );
+//         // console.log(validContact);
+
+//         // Define placeholder values
+//         const placeholderValues = {
+//           ACCOUNT_NAME: account.accountName || "",
+//           FIRST_NAME: validContact[0]?.firstName || "",
+//           MIDDLE_NAME: validContact[0]?.middleName || "",
+//           LAST_NAME: validContact[0]?.lastName || "",
+//           CONTACT_NAME: validContact[0]?.contactName || "",
+//           COMPANY_NAME: validContact[0]?.companyName || "",
+//           COUNTRY: validContact[0]?.country || "",
+//           STREET_ADDRESS: validContact[0]?.streetAddress || "",
+//           STATEPROVINCE: validContact[0]?.state || "",
+//           PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+//           ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+//           CITY: validContact[0]?.city || "",
+//           CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
+//           CURRENT_DAY_NUMBER: new Date().getDate(),
+//           CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//             weekday: "long",
+//           }),
+//           CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
+//           CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//             month: "long",
+//           }),
+//           CURRENT_YEAR: new Date().getFullYear(),
+//           LAST_DAY_FULL_DATE: lastDayFullDate,
+//           LAST_DAY_NUMBER: lastDayNumber,
+//           LAST_DAY_NAME: lastDayName,
+//           LAST_WEEK: lastWeek,
+//           LAST_MONTH_NUMBER: lastMonthNumber,
+//           LAST_MONTH_NAME: lastMonthName,
+//           LAST_QUARTER: lastQuarter,
+//           LAST_YEAR: lastYear,
+//           NEXT_DAY_FULL_DATE: nextDayFullDate,
+//           NEXT_DAY_NUMBER: nextDayNumber,
+//           NEXT_DAY_NAME: nextDayName,
+//           NEXT_WEEK: nextWeek,
+//           NEXT_MONTH_NUMBER: nextMonthNumber,
+//           NEXT_MONTH_NAME: nextMonthName,
+//           NEXT_QUARTER: nextQuarter,
+//           NEXT_YEAR: nextYear,
+//         };
+
+//         // Function to replace placeholders in text
+//         const replacePlaceholders = (template, data) => {
+//           return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
+//             return data[placeholder.trim()] || "";
+//           });
+//         };
+
+//         // Replace placeholders in the chat subject
+//         chat.chatsubject = replacePlaceholders(
+//           chat.chatsubject || "",
+//           placeholderValues
+//         );
+//         // Replace placeholders in the description messages
+//         if (Array.isArray(chat.description)) {
+//           chat.description = chat.description.map((desc) => ({
+//             ...desc,
+//             message: replacePlaceholders(desc.message || "", placeholderValues),
+//           }));
+//         }
+//       }
+//     };
+
+//     // Call the function to process chat data
+//     await processChatData(chataccountwise);
+
+//     res.status(200).json({
+//       message: "Chats Accountwise retrieved successfully",
+//       chataccountwise,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 //update messages
 const updateMessage = async (req, res) => {
   // console.log(req.body);
@@ -942,6 +1065,115 @@ const updateTaskCheckedStatus = async (req, res) => {
   }
 };
 
+// const getUnreadChatsWithLatestMessage = async (req, res) => {
+//   try {
+//     const unreadChats = await AccountwiseChat.find({
+//       chatstatus: false,
+//     })
+//       .populate({ path: "accountid", model: "Accounts" })
+//       .populate({ path: "description.senderid", model: "User" });
+
+//     const chatsWithLatestMessage = [];
+
+//     for (const chat of unreadChats) {
+//       const account = await Accounts.findById(chat.accountid._id).populate(
+//         "contacts"
+//       );
+
+//       if (!account) continue;
+
+//       const validContact = account.contacts.filter((contact) => contact.login);
+
+//       const currentDate = new Date();
+//       const placeholderValues = {
+//         ACCOUNT_NAME: account.accountName || "",
+//         FIRST_NAME: validContact[0]?.firstName || "",
+//         MIDDLE_NAME: validContact[0]?.middleName || "",
+//         LAST_NAME: validContact[0]?.lastName || "",
+//         CONTACT_NAME: validContact[0]?.contactName || "",
+//         COMPANY_NAME: validContact[0]?.companyName || "",
+//         COUNTRY: validContact[0]?.country || "",
+//         STREET_ADDRESS: validContact[0]?.streetAddress || "",
+//         STATEPROVINCE: validContact[0]?.state || "",
+//         PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+//         ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+//         CITY: validContact[0]?.city || "",
+//         CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
+//         CURRENT_DAY_NUMBER: new Date().getDate(),
+//         CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//           weekday: "long",
+//         }),
+//         CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
+//         CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//           month: "long",
+//         }),
+//         CURRENT_YEAR: new Date().getFullYear(),
+//         LAST_DAY_FULL_DATE: lastDayFullDate,
+//         LAST_DAY_NUMBER: lastDayNumber,
+//         LAST_DAY_NAME: lastDayName,
+//         LAST_WEEK: lastWeek,
+//         LAST_MONTH_NUMBER: lastMonthNumber,
+//         LAST_MONTH_NAME: lastMonthName,
+//         LAST_QUARTER: lastQuarter,
+//         LAST_YEAR: lastYear,
+//         NEXT_DAY_FULL_DATE: nextDayFullDate,
+//         NEXT_DAY_NUMBER: nextDayNumber,
+//         NEXT_DAY_NAME: nextDayName,
+//         NEXT_WEEK: nextWeek,
+//         NEXT_MONTH_NUMBER: nextMonthNumber,
+//         NEXT_MONTH_NAME: nextMonthName,
+//         NEXT_QUARTER: nextQuarter,
+//         NEXT_YEAR: nextYear,
+//       };
+
+//       const replacePlaceholders = (template, data) => {
+//         return template.replace(
+//           /\[([\w\s]+)\]/g,
+//           (match, key) => data[key.trim()] || ""
+//         );
+//       };
+
+//       // Replace placeholders in chatsubject
+//       const processedSubject = replacePlaceholders(
+//         chat.chatsubject || "",
+//         placeholderValues
+//       );
+
+//       // Get latest message
+//       const latestMessageRaw = chat.description?.length
+//         ? chat.description.reduce((latest, current) =>
+//             new Date(current.time) > new Date(latest.time) ? current : latest
+//           )
+//         : null;
+
+//       // Replace placeholders in latest message (if exists)
+//       const latestMessage = latestMessageRaw
+//         ? {
+//             ...latestMessageRaw,
+//             message: replacePlaceholders(
+//               latestMessageRaw.message || "",
+//               placeholderValues
+//             ),
+//           }
+//         : null;
+
+//       chatsWithLatestMessage.push({
+//         _id: chat._id,
+//         accountid: chat.accountid,
+//         chatsubject: processedSubject,
+//         latestMessage,
+//         clienttasks: chat.clienttasks,
+//       });
+//     }
+
+//     res.status(200).json({
+//       message: "Unread chats with latest message retrieved successfully",
+//       chats: chatsWithLatestMessage,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 const getUnreadChatsWithLatestMessage = async (req, res) => {
   try {
     const unreadChats = await AccountwiseChat.find({
@@ -953,38 +1185,23 @@ const getUnreadChatsWithLatestMessage = async (req, res) => {
     const chatsWithLatestMessage = [];
 
     for (const chat of unreadChats) {
-      const account = await Accounts.findById(chat.accountid._id).populate(
-        "contacts"
-      );
-
+      const account = await Accounts.findById(chat.accountid._id);
       if (!account) continue;
 
-      const validContact = account.contacts.filter((contact) => contact.login);
-
+      // Placeholder values (account + dates only)
       const currentDate = new Date();
       const placeholderValues = {
         ACCOUNT_NAME: account.accountName || "",
-        FIRST_NAME: validContact[0]?.firstName || "",
-        MIDDLE_NAME: validContact[0]?.middleName || "",
-        LAST_NAME: validContact[0]?.lastName || "",
-        CONTACT_NAME: validContact[0]?.contactName || "",
-        COMPANY_NAME: validContact[0]?.companyName || "",
-        COUNTRY: validContact[0]?.country || "",
-        STREET_ADDRESS: validContact[0]?.streetAddress || "",
-        STATEPROVINCE: validContact[0]?.state || "",
-        PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-        ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-        CITY: validContact[0]?.city || "",
-        CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-        CURRENT_DAY_NUMBER: new Date().getDate(),
-        CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+        CURRENT_DAY_FULL_DATE: currentDate.toLocaleDateString(),
+        CURRENT_DAY_NUMBER: currentDate.getDate(),
+        CURRENT_DAY_NAME: currentDate.toLocaleString("default", {
           weekday: "long",
         }),
-        CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-        CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+        CURRENT_MONTH_NUMBER: currentDate.getMonth() + 1,
+        CURRENT_MONTH_NAME: currentDate.toLocaleString("default", {
           month: "long",
         }),
-        CURRENT_YEAR: new Date().getFullYear(),
+        CURRENT_YEAR: currentDate.getFullYear(),
         LAST_DAY_FULL_DATE: lastDayFullDate,
         LAST_DAY_NUMBER: lastDayNumber,
         LAST_DAY_NAME: lastDayName,
@@ -1003,18 +1220,13 @@ const getUnreadChatsWithLatestMessage = async (req, res) => {
         NEXT_YEAR: nextYear,
       };
 
+      // Replace placeholders
       const replacePlaceholders = (template, data) => {
-        return template.replace(
-          /\[([\w\s]+)\]/g,
-          (match, key) => data[key.trim()] || ""
-        );
+        return template.replace(/\[([\w\s]+)\]/g, (match, key) => data[key.trim()] || "");
       };
 
-      // Replace placeholders in chatsubject
-      const processedSubject = replacePlaceholders(
-        chat.chatsubject || "",
-        placeholderValues
-      );
+      // Process subject
+      const processedSubject = replacePlaceholders(chat.chatsubject || "", placeholderValues);
 
       // Get latest message
       const latestMessageRaw = chat.description?.length
@@ -1023,14 +1235,11 @@ const getUnreadChatsWithLatestMessage = async (req, res) => {
           )
         : null;
 
-      // Replace placeholders in latest message (if exists)
+      // Replace placeholders in latest message
       const latestMessage = latestMessageRaw
         ? {
             ...latestMessageRaw,
-            message: replacePlaceholders(
-              latestMessageRaw.message || "",
-              placeholderValues
-            ),
+            message: replacePlaceholders(latestMessageRaw.message || "", placeholderValues),
           }
         : null;
 
@@ -1052,6 +1261,92 @@ const getUnreadChatsWithLatestMessage = async (req, res) => {
   }
 };
 
+// const getUnreadChatsByAccountId = async (req, res) => {
+//   try {
+//     const { accountid } = req.params;
+
+//     if (!accountid) {
+//       return res.status(400).json({ error: "accountid is required in params" });
+//     }
+
+//     const unreadChats = await AccountwiseChat.find({
+//       "description.isRead": false,
+//       accountid: accountid,
+//     })
+//       .populate({ path: "accountid", model: "Accounts" })
+//       .populate({ path: "description.senderid", model: "User" });
+
+//     const chatsWithLatestMessage = [];
+
+//     for (const chat of unreadChats) {
+//       const account = await Accounts.findById(chat.accountid._id).populate(
+//         "contacts"
+//       );
+//       if (!account) continue;
+
+//       const validContact = account.contacts.filter((contact) => contact.login);
+
+//       const placeholderValues = {
+//         ACCOUNT_NAME: account.accountName || "",
+//         FIRST_NAME: validContact[0]?.firstName || "",
+//         MIDDLE_NAME: validContact[0]?.middleName || "",
+//         LAST_NAME: validContact[0]?.lastName || "",
+//         CONTACT_NAME: validContact[0]?.contactName || "",
+//         COMPANY_NAME: validContact[0]?.companyName || "",
+//         COUNTRY: validContact[0]?.country || "",
+//         STREET_ADDRESS: validContact[0]?.streetAddress || "",
+//         STATEPROVINCE: validContact[0]?.state || "",
+//         PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
+//         ZIPPOSTALCODE: validContact[0]?.postalCode || "",
+//         CITY: validContact[0]?.city || "",
+//         CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
+//         CURRENT_DAY_NUMBER: new Date().getDate(),
+//         CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//           weekday: "long",
+//         }),
+//         CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
+//         CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//           month: "long",
+//         }),
+//         CURRENT_YEAR: new Date().getFullYear(),
+//       };
+
+//       const replacePlaceholders = (template, data) => {
+//         return template.replace(
+//           /\[([\w\s]+)\]/g,
+//           (match, key) => data[key.trim()] || ""
+//         );
+//       };
+
+//       const latestMessageRaw = chat.description?.length
+//         ? chat.description.reduce((latest, current) =>
+//             new Date(current.time) > new Date(latest.time) ? current : latest
+//           )
+//         : null;
+
+//       if (latestMessageRaw) {
+//         chatsWithLatestMessage.push({
+//           accountid: chat.accountid._id,
+//           isRead: false,
+//           senderName: latestMessageRaw.senderid?.username || "Unknown",
+//           fromwhome: latestMessageRaw.fromwhome || "Unknown",
+//           message: replacePlaceholders(
+//             latestMessageRaw.message || "",
+//             placeholderValues
+//           ),
+//         });
+//       }
+//     }
+
+//     res.status(200).json({
+//       message: "Unread chats for the account retrieved successfully",
+//       chats: chatsWithLatestMessage,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const getUnreadChatsByAccountId = async (req, res) => {
   try {
     const { accountid } = req.params;
@@ -1070,36 +1365,21 @@ const getUnreadChatsByAccountId = async (req, res) => {
     const chatsWithLatestMessage = [];
 
     for (const chat of unreadChats) {
-      const account = await Accounts.findById(chat.accountid._id).populate(
-        "contacts"
-      );
+      const account = await Accounts.findById(chat.accountid._id);
       if (!account) continue;
 
-      const validContact = account.contacts.filter((contact) => contact.login);
+      const now = new Date();
 
       const placeholderValues = {
         ACCOUNT_NAME: account.accountName || "",
-        FIRST_NAME: validContact[0]?.firstName || "",
-        MIDDLE_NAME: validContact[0]?.middleName || "",
-        LAST_NAME: validContact[0]?.lastName || "",
-        CONTACT_NAME: validContact[0]?.contactName || "",
-        COMPANY_NAME: validContact[0]?.companyName || "",
-        COUNTRY: validContact[0]?.country || "",
-        STREET_ADDRESS: validContact[0]?.streetAddress || "",
-        STATEPROVINCE: validContact[0]?.state || "",
-        PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-        ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-        CITY: validContact[0]?.city || "",
-        CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
-        CURRENT_DAY_NUMBER: new Date().getDate(),
-        CURRENT_DAY_NAME: new Date().toLocaleString("default", {
-          weekday: "long",
-        }),
-        CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-        CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
-          month: "long",
-        }),
-        CURRENT_YEAR: new Date().getFullYear(),
+
+        // Date placeholders
+        CURRENT_DAY_FULL_DATE: now.toLocaleDateString(),
+        CURRENT_DAY_NUMBER: now.getDate(),
+        CURRENT_DAY_NAME: now.toLocaleString("default", { weekday: "long" }),
+        CURRENT_MONTH_NUMBER: now.getMonth() + 1,
+        CURRENT_MONTH_NAME: now.toLocaleString("default", { month: "long" }),
+        CURRENT_YEAR: now.getFullYear(),
       };
 
       const replacePlaceholders = (template, data) => {
@@ -1164,19 +1444,22 @@ const updateChatStatus = async (req, res) => {
   }
 };
 
+
 // const getUnreadMessages = async (req, res) => {
 //   try {
 //     const { accountid, fromwhome } = req.params;
 
 //     // Validate fromwhome parameter
-//     if (fromwhome !== 'client' && fromwhome !== 'Admin') {
-//       return res.status(400).json({ error: "Invalid 'fromwhome' parameter. Must be 'Client' or 'Admin'" });
+//     if (fromwhome !== "client" && fromwhome !== "Admin") {
+//       return res.status(400).json({
+//         error: "Invalid 'fromwhome' parameter. Must be 'Client' or 'Admin'",
+//       });
 //     }
 
 //     // Find all chats for the account
 //     const chats = await AccountwiseChat.find({
 //       accountid: accountid,
-//       active: true
+//       active: true,
 //     })
 //       .populate({ path: "accountid", model: "Accounts" })
 //       .populate({ path: "description.senderid", model: "User" });
@@ -1209,56 +1492,92 @@ const updateChatStatus = async (req, res) => {
 //       CITY: validContact[0]?.city || "",
 //       CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
 //       CURRENT_DAY_NUMBER: new Date().getDate(),
-//       CURRENT_DAY_NAME: new Date().toLocaleString("default", { weekday: "long" }),
+//       CURRENT_DAY_NAME: new Date().toLocaleString("default", {
+//         weekday: "long",
+//       }),
 //       CURRENT_MONTH_NUMBER: new Date().getMonth() + 1,
-//       CURRENT_MONTH_NAME: new Date().toLocaleString("default", { month: "long" }),
+//       CURRENT_MONTH_NAME: new Date().toLocaleString("default", {
+//         month: "long",
+//       }),
 //       CURRENT_YEAR: new Date().getFullYear(),
 //     };
 
 //     // Function to replace placeholders
 //     const replacePlaceholders = (template, data) => {
-//       return template.replace(/\[([\w\s]+)\]/g, (match, key) => data[key.trim()] || "");
+//       return template.replace(
+//         /\[([\w\s]+)\]/g,
+//         (match, key) => data[key.trim()] || ""
+//       );
 //     };
 
-//     // Collect all unread messages in a single array
-//     const allUnreadMessages = [];
+//     // Group messages by chatId
+//     const groupedMessages = {};
 
-//     chats.forEach(chat => {
+//     chats.forEach((chat) => {
 //       if (chat.description && Array.isArray(chat.description)) {
-//         chat.description.forEach(message => {
-//           if (message.fromwhome === fromwhome && message.isRead === false) {
-//             // Replace placeholders
-//             const processedChatSubject = replacePlaceholders(chat.chatsubject || "", placeholderValues);
-//             const processedMessage = replacePlaceholders(message.message || "", placeholderValues);
+//         const processedChatSubject = replacePlaceholders(
+//           chat.chatsubject || "",
+//           placeholderValues
+//         );
 
-//             allUnreadMessages.push({
-//               chatId: chat._id,
-//               chatSubject: processedChatSubject,
+//         chat.description.forEach((message) => {
+//           if (message.fromwhome === fromwhome && message.isRead === false) {
+//             const processedMessage = replacePlaceholders(
+//               message.message || "",
+//               placeholderValues
+//             );
+
+//             if (!groupedMessages[chat._id]) {
+//               groupedMessages[chat._id] = {
+//                 chatId: chat._id,
+//                 chatSubject: processedChatSubject,
+//                 messages: [],
+//               };
+//             }
+
+//             groupedMessages[chat._id].messages.push({
 //               messageId: message._id,
 //               message: processedMessage,
 //               sender: message.senderid,
 //               time: message.time,
 //               fromwhome: message.fromwhome,
-//               isRead: message.isRead
+//               isRead: message.isRead,
 //             });
 //           }
 //         });
 //       }
 //     });
 
-//     // Sort all messages by time (oldest first)
-//     allUnreadMessages.sort((a, b) => new Date(a.time) - new Date(b.time));
+//     // Convert to array and sort messages within each chat by time
+//     const result = Object.values(groupedMessages).map((chat) => ({
+//       ...chat,
+//       messages: chat.messages.sort(
+//         (a, b) => new Date(a.time) - new Date(b.time)
+//       ),
+//       unreadCount: chat.messages.length,
+//     }));
+
+//     // Sort chats by the time of their most recent message (newest first)
+//     result.sort((a, b) => {
+//       const aLatest = new Date(a.messages[a.messages.length - 1]?.time || 0);
+//       const bLatest = new Date(b.messages[b.messages.length - 1]?.time || 0);
+//       return bLatest - aLatest;
+//     });
+
+//     const totalUnreadCount = result.reduce(
+//       (sum, chat) => sum + chat.unreadCount,
+//       0
+//     );
 
 //     res.status(200).json({
-//       message: `All unread messages from ${fromwhome} retrieved successfully`,
-//       count: allUnreadMessages.length,
-//       unreadMessages: allUnreadMessages
+//       message: `Unread messages from ${fromwhome} retrieved successfully`,
+//       count: totalUnreadCount,
+//       chats: result,
 //     });
 //   } catch (error) {
 //     res.status(500).json({ error: error.message });
 //   }
 // };
-
 const getUnreadMessages = async (req, res) => {
   try {
     const { accountid, fromwhome } = req.params;
@@ -1282,28 +1601,15 @@ const getUnreadMessages = async (req, res) => {
       return res.status(404).json({ error: "No chats found for this account" });
     }
 
-    // Get account details for placeholder replacement
-    const account = await Accounts.findById(accountid).populate("contacts");
+    // Get account details (only account name)
+    const account = await Accounts.findById(accountid);
     if (!account) {
       return res.status(404).json({ error: "Account not found" });
     }
 
-    const validContact = account.contacts.filter((contact) => contact.login);
-
-    // Prepare placeholder values
+    // Prepare placeholder values (account + dates only)
     const placeholderValues = {
       ACCOUNT_NAME: account.accountName || "",
-      FIRST_NAME: validContact[0]?.firstName || "",
-      MIDDLE_NAME: validContact[0]?.middleName || "",
-      LAST_NAME: validContact[0]?.lastName || "",
-      CONTACT_NAME: validContact[0]?.contactName || "",
-      COMPANY_NAME: validContact[0]?.companyName || "",
-      COUNTRY: validContact[0]?.country || "",
-      STREET_ADDRESS: validContact[0]?.streetAddress || "",
-      STATEPROVINCE: validContact[0]?.state || "",
-      PHONE_NUMBER: validContact[0]?.phoneNumbers || "",
-      ZIPPOSTALCODE: validContact[0]?.postalCode || "",
-      CITY: validContact[0]?.city || "",
       CURRENT_DAY_FULL_DATE: new Date().toLocaleDateString(),
       CURRENT_DAY_NUMBER: new Date().getDate(),
       CURRENT_DAY_NAME: new Date().toLocaleString("default", {
