@@ -262,7 +262,7 @@ const adminSignup = async (req, res) => {
 // CREATE user from contact with login=true
  const createUserFromContact = async (req, res) => {
   try {
-    const { contactId, password } = req.body;
+    const { contactId, password ,username} = req.body;
 
     const contact = await Contact.findById(contactId);
     if (!contact) {
@@ -276,7 +276,7 @@ const adminSignup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      username: contact.contactName,
+      username: username,
       email: contact.email,
       password: hashedPassword,
       role: "client",

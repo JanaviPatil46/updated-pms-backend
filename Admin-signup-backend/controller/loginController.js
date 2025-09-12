@@ -179,17 +179,31 @@ const generatetoken = async (req, res) => {
 
     if (userId) {
       // ✅ Prefer userId (safer than just email/username)
-      user = await User.findOne({ _id: userId, email });
-      if (!user) {
-        return res.status(404).json({ error: "User not found for given ID and email" });
-      }
+    //   user = await User.findOne({ _id: userId, email });
+    //   if (!user) {
+    //     return res.status(404).json({ error: "User not found for given ID and email" });
+    //   }
 
-      // verify password manually if not handled in schema
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(401).json({ error: "Invalid password" });
-      }
-    } else {
+    //   // verify password manually if not handled in schema
+    //   const isMatch = await bcrypt.compare(password, user.password);
+    //   if (!isMatch) {
+    //     return res.status(401).json({ error: "Invalid password" });
+    //   }
+    // } 
+    user = await User.findOne({ _id: userId, email });
+  if (!user) {
+    return res.status(404).json({ error: "User not found for given ID and email" });
+  }
+
+  // ✅ only check password if provided (normal login)
+  if (password && password.trim() !== "") {
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+  }
+    }
+    else {
       // fallback to existing User.login logic
       user = await User.login({ email, username, password });
     }

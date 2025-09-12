@@ -234,9 +234,16 @@ const createInvoice = async (req, res) => {
 
       // Filter valid contacts
       const validContacts = accountinv.contacts.filter(contact => contact.emailSync);
+      // if (validContacts.length === 0) {
+      //     return res.status(400).json({ status: 400, message: "No contacts with emailSync enabled." });
+      // }
       if (validContacts.length === 0) {
-          return res.status(400).json({ status: 400, message: "No contacts with emailSync enabled." });
-      }
+    console.log("No contacts with emailSync enabled. Skipping email sending...");
+    return res.status(201).json({
+        message: "Invoice created successfully",
+        newInvoice
+    });
+}
 
       const transporter = nodemailer.createTransport({
           host: "smtp.gmail.com",

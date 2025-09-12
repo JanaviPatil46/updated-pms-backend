@@ -98,15 +98,225 @@ const getOrganizerAccountWise = async (req, res) => {
 //POST a new OrganizerAccountWise
 
 // sends eamil
+// const createOrganizerAccountWise = async (req, res) => {
+//   try {
+//     // const { accountid, username, organizerName, organizerLink } = req.body;
+
+//     // Save the organizer account-wise data
+//     const newOrganizerAccountWise = new OrganizerAccountWise(req.body);
+
+//     await newOrganizerAccountWise.save();
+//     // console.log(newOrganizerAccountWise);
+//     // Fetch account and associated contacts
+//     const account = await Accounts.findById(
+//       newOrganizerAccountWise.accountid
+//     ).populate("contacts");
+
+//     const organizertemp = await OrganizerTemplate.findById(
+//       newOrganizerAccountWise.organizertemplateid
+//     );
+//     // console.log(organizertemp);
+//     const replacePlaceholders = (template, data) => {
+//       return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
+//         return data[placeholder.trim()] || "";
+//       });
+//     };
+// //  console.log(account);
+//     const validContacts = account.contacts.filter(
+//       (contact) => contact.emailSync
+//     );
+//     if (validContacts.length === 0) {
+//       return res
+//         .status(400)
+//         .json({ status: 400, message: "No contacts with emailSync enabled." });
+//     }
+
+//     const missingContactsAccounts = [];
+//     const organizerLink = `http://localhost:3000/organizers/update/${newOrganizerAccountWise._id}`;
+
+//     // Get the current date
+//     // console.log(validContacts);
+//     const emailPromises = validContacts.map(async (contactId) => {
+//       try {
+//         const contact = await Contacts.findById(contactId);
+//         const organizerName = replacePlaceholders(organizertemp.organizerName, {
+//           ACCOUNT_NAME: account.accountName,
+//           // FIRST_NAME: contact.firstName,
+//           // MIDDLE_NAME: contact.middleName,
+//           // LAST_NAME: contact.lastName,
+//           // CONTACT_NAME: contact.contactName,
+//           // COMPANY_NAME: contact.companyName,
+//           // COUNTRY: contact.country,
+//           // STREET_ADDRESS: contact.streetAddress,
+//           // STATEPROVINCE: contact.state,
+//           // PHONE_NUMBER: contact.phoneNumbers,
+//           // ZIPPOSTALCODE: contact.postalCode,
+//           // CITY: contact.city,
+//           CURRENT_DAY_FULL_DATE: currentFullDate,
+//           CURRENT_DAY_NUMBER: currentDayNumber,
+//           CURRENT_DAY_NAME: currentDayName,
+//           CURRENT_WEEK: currentWeek,
+//           CURRENT_MONTH_NUMBER: currentMonthNumber,
+//           CURRENT_MONTH_NAME: currentMonthName,
+//           CURRENT_QUARTER: currentQuarter,
+//           CURRENT_YEAR: currentYear,
+//           LAST_DAY_FULL_DATE: lastDayFullDate,
+//           LAST_DAY_NUMBER: lastDayNumber,
+//           LAST_DAY_NAME: lastDayName,
+//           LAST_WEEK: lastWeek,
+//           LAST_MONTH_NUMBER: lastMonthNumber,
+//           LAST_MONTH_NAME: lastMonthName,
+//           LAST_QUARTER: lastQuarter,
+//           LAST_YEAR: lastYear,
+//           NEXT_DAY_FULL_DATE: nextDayFullDate,
+//           NEXT_DAY_NUMBER: nextDayNumber,
+//           NEXT_DAY_NAME: nextDayName,
+//           NEXT_WEEK: nextWeek,
+//           NEXT_MONTH_NUMBER: nextMonthNumber,
+//           NEXT_MONTH_NAME: nextMonthName,
+//           NEXT_QUARTER: nextQuarter,
+//           NEXT_YEAR: nextYear,
+//         });
+//         // console.log(organizerName);
+//         if (contact.login === true) {
+//           const transporter = nodemailer.createTransport({
+//             host: "smtp.gmail.com",
+//             port: 587,
+//             secure: false, // Use STARTTLS
+//             auth: {
+//               user: process.env.EMAIL,
+//               pass: process.env.EMAIL_PASSWORD,
+//             },
+//             tls: {
+//               rejectUnauthorized: false,
+//             },
+//           });
+
+//           if (!contact.email) {
+//             missingContactsAccounts.push(account.accountName);
+//             return null; // Skip sending email for this contact
+//           } else {
+//             // Email options for the contact
+//             const mailOptions = {
+//               from: process.env.EMAIL,
+//               to: contact.email,
+//               subject: "New Organizer Created for You",
+//               html: `
+//                               <p>Hello ${account.accountName},</p>
+//                               <p>We have created an organizer for you: ${organizerName}</p>
+//                               <p>Please click the link below to access it:</p>
+//                               <a href="${organizerLink}">View organizer</a>
+//                               <p>Button not working? Copy and paste this link into your browser:</p>
+//                               <p>${organizerLink}</p>
+//                           `,
+//             };
+
+//             // Send the email
+//             const result = await transporter.sendMail(mailOptions);
+//             // console.log(`Email sent to ${contact.email}`);
+//             return result;
+//           }
+//         } else {
+//           const transporter = nodemailer.createTransport({
+//             host: "smtp.gmail.com",
+//             port: 587,
+//             secure: false, // Use STARTTLS
+//             auth: {
+//               user: process.env.EMAIL,
+//               pass: process.env.EMAIL_PASSWORD,
+//             },
+//             tls: {
+//               rejectUnauthorized: false,
+//             },
+//           });
+
+//           // const missingAccountsList = missingContactsAccounts.join(", ");
+//           const mailOptions = {
+//             from: process.env.EMAIL,
+//             to: process.env.EMAIL,
+//             subject: "Unable to send Organizer to Contacts",
+//             html: `
+//                       <p>The following accounts have no contacts who can  fill the organizer, so we couldn’t create organizer for them:</p>
+                    
+//                       <p>Oraganizer Name:${organizerName}</p>
+                     
+//                   `,
+//           };
+
+//           try {
+//             await transporter.sendMail(mailOptions);
+//             console.log(
+//               "Notification email sent to user about missing contacts"
+//             );
+//           } catch (error) {
+//             console.error("Failed to send notification email:", error.message);
+//           }
+//         }
+//       } catch (error) {
+//         console.error(`Failed to process contact ${contactId}:`, error.message);
+//         throw error;
+//       }
+//     });
+
+//     console.log("Sending emails...");
+//     await Promise.all(emailPromises);
+
+//     // Send notification email if there are missing contacts
+//     if (missingContactsAccounts.length > 0) {
+//       const transporter = nodemailer.createTransport({
+//         host: "smtp.gmail.com",
+//         port: 587,
+//         secure: false, // Use STARTTLS
+//         auth: {
+//           user: process.env.EMAIL,
+//           pass: process.env.EMAIL_PASSWORD,
+//         },
+//         tls: {
+//           rejectUnauthorized: false,
+//         },
+//       });
+
+//       const missingAccountsList = missingContactsAccounts.join(", ");
+//       const mailOptions = {
+//         from: process.env.EMAIL,
+//         to: process.env.EMAIL,
+//         subject: "Unable to send Organizer to Contacts",
+//         html: `
+//                   <p>The following accounts have no contacts who can  fill the organizer, so we couldn’t create organizer for them:</p>
+//                   <p>${missingAccountsList}</p>
+//                   <p>Proposal name:</p>
+//                   <p>${organizerName}</p>
+//               `,
+//       };
+
+//       try {
+//         await transporter.sendMail(mailOptions);
+//         console.log("Notification email sent to user about missing contacts");
+//       } catch (error) {
+//         console.error("Failed to send notification email:", error.message);
+//       }
+//     }
+
+//     return res.status(201).json({
+//       message: "OrganizerAccountWise created successfully",
+//       newOrganizerAccountWise,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Error creating OrganizerAccountWise or sending emails:",
+//       error
+//     );
+//     return res.status(500).json({
+//       error: "Error creating OrganizerAccountWise or sending emails",
+//     });
+//   }
+// };
 const createOrganizerAccountWise = async (req, res) => {
   try {
-    // const { accountid, username, organizerName, organizerLink } = req.body;
-
     // Save the organizer account-wise data
     const newOrganizerAccountWise = new OrganizerAccountWise(req.body);
-
     await newOrganizerAccountWise.save();
-    // console.log(newOrganizerAccountWise);
+
     // Fetch account and associated contacts
     const account = await Accounts.findById(
       newOrganizerAccountWise.accountid
@@ -115,43 +325,22 @@ const createOrganizerAccountWise = async (req, res) => {
     const organizertemp = await OrganizerTemplate.findById(
       newOrganizerAccountWise.organizertemplateid
     );
-    // console.log(organizertemp);
+
     const replacePlaceholders = (template, data) => {
       return template.replace(/\[([\w\s]+)\]/g, (match, placeholder) => {
         return data[placeholder.trim()] || "";
       });
     };
-//  console.log(account);
-    // const validContacts = account.contacts.filter(
-    //   (contact) => contact.emailSync
-    // );
-    // if (validContacts.length === 0) {
-    //   return res
-    //     .status(400)
-    //     .json({ status: 400, message: "No contacts with emailSync enabled." });
-    // }
 
     const missingContactsAccounts = [];
     const organizerLink = `http://localhost:3000/organizers/update/${newOrganizerAccountWise._id}`;
 
-    // Get the current date
-    // console.log(validContacts);
-    const emailPromises = validContacts.map(async (contactId) => {
+    // Loop through all contacts (no emailSync validation anymore)
+    const emailPromises = account.contacts.map(async (contactId) => {
       try {
         const contact = await Contacts.findById(contactId);
         const organizerName = replacePlaceholders(organizertemp.organizerName, {
           ACCOUNT_NAME: account.accountName,
-          // FIRST_NAME: contact.firstName,
-          // MIDDLE_NAME: contact.middleName,
-          // LAST_NAME: contact.lastName,
-          // CONTACT_NAME: contact.contactName,
-          // COMPANY_NAME: contact.companyName,
-          // COUNTRY: contact.country,
-          // STREET_ADDRESS: contact.streetAddress,
-          // STATEPROVINCE: contact.state,
-          // PHONE_NUMBER: contact.phoneNumbers,
-          // ZIPPOSTALCODE: contact.postalCode,
-          // CITY: contact.city,
           CURRENT_DAY_FULL_DATE: currentFullDate,
           CURRENT_DAY_NUMBER: currentDayNumber,
           CURRENT_DAY_NAME: currentDayName,
@@ -177,80 +366,41 @@ const createOrganizerAccountWise = async (req, res) => {
           NEXT_QUARTER: nextQuarter,
           NEXT_YEAR: nextYear,
         });
-        // console.log(organizerName);
-        if (contact.login === true) {
-          const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false, // Use STARTTLS
-            auth: {
-              user: process.env.EMAIL,
-              pass: process.env.EMAIL_PASSWORD,
-            },
-            tls: {
-              rejectUnauthorized: false,
-            },
-          });
 
-          if (!contact.email) {
-            missingContactsAccounts.push(account.accountName);
-            return null; // Skip sending email for this contact
-          } else {
-            // Email options for the contact
-            const mailOptions = {
-              from: process.env.EMAIL,
-              to: contact.email,
-              subject: "New Organizer Created for You",
-              html: `
-                              <p>Hello ${account.accountName},</p>
-                              <p>We have created an organizer for you: ${organizerName}</p>
-                              <p>Please click the link below to access it:</p>
-                              <a href="${organizerLink}">View organizer</a>
-                              <p>Button not working? Copy and paste this link into your browser:</p>
-                              <p>${organizerLink}</p>
-                          `,
-            };
+        const transporter = nodemailer.createTransport({
+          host: "smtp.gmail.com",
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASSWORD,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
 
-            // Send the email
-            const result = await transporter.sendMail(mailOptions);
-            // console.log(`Email sent to ${contact.email}`);
-            return result;
-          }
+        if (!contact.email) {
+          missingContactsAccounts.push(account.accountName);
+          return null;
         } else {
-          const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false, // Use STARTTLS
-            auth: {
-              user: process.env.EMAIL,
-              pass: process.env.EMAIL_PASSWORD,
-            },
-            tls: {
-              rejectUnauthorized: false,
-            },
-          });
-
-          // const missingAccountsList = missingContactsAccounts.join(", ");
+          // Email options for the contact
           const mailOptions = {
             from: process.env.EMAIL,
-            to: process.env.EMAIL,
-            subject: "Unable to send Organizer to Contacts",
+            to: contact.email,
+            subject: "New Organizer Created for You",
             html: `
-                      <p>The following accounts have no contacts who can  fill the organizer, so we couldn’t create organizer for them:</p>
-                    
-                      <p>Oraganizer Name:${organizerName}</p>
-                     
-                  `,
+              <p>Hello ${account.accountName},</p>
+              <p>We have created an organizer for you: ${organizerName}</p>
+              <p>Please click the link below to access it:</p>
+              <a href="${organizerLink}">View organizer</a>
+              <p>Button not working? Copy and paste this link into your browser:</p>
+              <p>${organizerLink}</p>
+            `,
           };
 
-          try {
-            await transporter.sendMail(mailOptions);
-            console.log(
-              "Notification email sent to user about missing contacts"
-            );
-          } catch (error) {
-            console.error("Failed to send notification email:", error.message);
-          }
+          const result = await transporter.sendMail(mailOptions);
+          return result;
         }
       } catch (error) {
         console.error(`Failed to process contact ${contactId}:`, error.message);
@@ -266,7 +416,7 @@ const createOrganizerAccountWise = async (req, res) => {
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 587,
-        secure: false, // Use STARTTLS
+        secure: false,
         auth: {
           user: process.env.EMAIL,
           pass: process.env.EMAIL_PASSWORD,
@@ -282,11 +432,9 @@ const createOrganizerAccountWise = async (req, res) => {
         to: process.env.EMAIL,
         subject: "Unable to send Organizer to Contacts",
         html: `
-                  <p>The following accounts have no contacts who can  fill the organizer, so we couldn’t create organizer for them:</p>
-                  <p>${missingAccountsList}</p>
-                  <p>Proposal name:</p>
-                  <p>${organizerName}</p>
-              `,
+          <p>The following accounts have no contacts with email, so we couldn’t send organizer to them:</p>
+          <p>${missingAccountsList}</p>
+        `,
       };
 
       try {
@@ -565,8 +713,7 @@ const getActiveOrganizerByAccountId = async (req, res) => {
         organizerAccountWise,
       });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.status(500).json({ error: error.message})  }
 };
 
 
