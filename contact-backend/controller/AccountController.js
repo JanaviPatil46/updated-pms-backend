@@ -383,6 +383,7 @@ const getAccountsListById = async (req, res) => {
       Pendingsignatures: "",
       Lastlogin: "",
       Contacts: accounts.contacts,
+      Users: accounts.userid
     };
     //sort({ createdAt: -1 });
     res.status(200).json({ message: "Accounts retrieved successfully", accountlist });

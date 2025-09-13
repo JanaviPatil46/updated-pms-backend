@@ -248,11 +248,11 @@ const fs = require('fs');
 // const { use } = require("../middlewares/clientsignupOTPmail");
 
 const adminSignup = async (req, res) => {
-  const { username, email, password, role,login,notify,emailSync } = req.body;
+  const { username, email, password, role,login,notify,emailSync ,contactId} = req.body;
   console.log("console",req.body);
 
   try {
-    const user = await User.signup({ username, email, password, role,login,notify,emailSync  });
+    const user = await User.signup({ username, email, password, role,login,notify,emailSync ,contactId });
     res.status(200).json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -336,17 +336,44 @@ const getUserByContactId = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ contactId: contactId });
-    
+    const user = await User.findOne({ contactId })
+      .populate({
+        path: "contactId",
+        model: "Contacts",
+        select: "_id contactName note", // ✅ only include these fields
+      });
+
+
     if (!user) {
       return res.status(404).json({ error: "No user found with this contact ID" });
     }
 
+    // ✅ Return a simplified object
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: "Server error while fetching user" });
   }
 };
+
+// const getUserByContactId = async (req, res) => {
+//   const { contactId } = req.params;
+// console.log("contactId",contactId)
+//   if (!mongoose.Types.ObjectId.isValid(contactId)) {
+//     return res.status(404).json({ error: "Invalid contact ID format" });
+//   }
+
+//   try {
+//     const user = await User.findOne({ contactId: contactId });
+    
+//     if (!user) {
+//       return res.status(404).json({ error: "No user found with this contact ID" });
+//     }
+
+//     res.status(200).json(user);
+//   } catch (error) {
+//     res.status(500).json({ error: "Server error while fetching user" });
+//   }
+// };
 const deleteUserByContactId = async (req, res) => {
   const { contactId } = req.params;
 

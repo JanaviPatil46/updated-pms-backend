@@ -62,7 +62,7 @@ router.post("/from-contact", createUserFromContact);
 router.get("/user", getUsers);
 router.get("/user/:id", getUser);
 // getUserByContactId
-router.get("/user/:contactId", getUserByContactId);
+router.get("/user/bycontact/:contactId", getUserByContactId);
 router.delete("/user/deletecontact/:contactId",deleteUserByContactId)
 router.post("/user", createUser);
 router.delete("/user/:id", deleteUser);

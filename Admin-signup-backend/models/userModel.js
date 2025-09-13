@@ -112,7 +112,7 @@ const userSchema = new mongoose.Schema(
 //!static signup method
 userSchema.statics.signup = async function (data) {
   // const { username, email, password, role } = data;
-  const {username, email, password, role, login, notify, emailSync} =data
+  const {username, email, password, role, login, notify, emailSync,contactId} =data
 
   //todo validation all fields required
 
@@ -132,7 +132,7 @@ userSchema.statics.signup = async function (data) {
   const salt = await bcrypt.genSalt(10);
   const hash1 = await bcrypt.hash(password, salt);
 
-  const user = await this.create({ username, email, password: hash1, cpassword: hash1, role,login,notify,emailSync });
+  const user = await this.create({ username, email, password: hash1, cpassword: hash1, role,login,notify,emailSync,contactId });
   console.log("user",user)
   return user;
 };
