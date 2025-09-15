@@ -39,7 +39,7 @@ const upload = require('../multerConfig');
 const {deleteUserByContactId, createUserFromContact,updateUserPasswordwithoutAut,createUser, getUsers, getUser, deleteUser, updateUser, adminSignup, getUserByEmail, updateUserPassword, updateLoginStatus, getUserListbyId, getUsersByRoles, getVerifyUserbyPassword,uploadProfilePicture,getUserClientByEmail,getUserByContactId } = require("../controller/userController");
 // const { validateToken, logout, cleanupBlacklist } = require("../middleware/authJwt");
 const { validateToken, logout } = require("../middleware/authJwt");
-const { generatetoken } = require("../controller/loginController");
+const { generatetoken ,generatetokenforSingleClient} = require("../controller/loginController");
 const { adminLogin } = require("../controller/loginController");
 
 //USER START******************** */
@@ -51,6 +51,7 @@ router.post("/login/logout", validateToken, logout);
 
 //client verifytoken
 router.post("/clientlogin/generatetokenforclient", generatetoken);
+router.post("/clientlogin/singleclinet/generatetoken",generatetokenforSingleClient)
 router.get("/clientlogin/verifytokenforclient", validateToken, (req, res) => {
   res.json({ message: "Access granted", user: req.user });
 });
