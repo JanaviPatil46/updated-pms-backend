@@ -24,7 +24,7 @@ router.get("/accountdetails/accountbycontactid/:contactId", getAccountsbyContact
 
 router.patch("/accountdetails/updatecontacts/byaccountIds", updateContactsForAccounts);
 
-router.delete("/accountdetails/removecontactfromaccount/:accountId/:contactId", removeContactFromAccount);
+router.delete("/accountdetails/removecontactfromaccount/:accountId/:contactId/:userId", removeContactFromAccount);
 
 router.get("/accountdetails/getAccountbyIdAll/:id", getAccountbyIdAll);
 router.get("/account/accountdetailslist/:isActive", getActiveAccountList);

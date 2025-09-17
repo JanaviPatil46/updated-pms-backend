@@ -362,11 +362,24 @@ const getAccountsList = async (req, res) => {
 const getAccountsListById = async (req, res) => {
   const { id } = req.params;
   try {
-    const accounts = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts",populate: {
-          path: "userid",   // 👈 populate userid inside each contact
-          model: "User"
-        } });
-
+    // const accounts = await Accounts.findById(id).populate({ path: "tags", model: "Tags" }).populate({ path: "teamMember", model: "User" }).populate({ path: "contacts", model: "Contacts", select: "_id contactName description email userid firstName middleName lastName ", populate: {
+    //       path: "userid",
+    //       model: "User",
+    //       select: "_id email login notify emailSync contactId"
+    //     }}).populate({ path: "userid", model: "User",select: "_id email login notify emailSync contactId" });
+const accounts = await Accounts.findById(id)
+      .populate({ path: "tags", model: "Tags" })
+      .populate({ path: "teamMember", model: "User" })
+      .populate({
+        path: "contacts",
+        model: "Contacts",
+        select: "_id contactName description email firstName middleName lastName" // removed userid
+      })
+      .populate({
+        path: "userid",
+        model: "User",
+        select: "_id email login notify emailSync contactId"
+      });
     const accountlist = {
       id: accounts._id,
       Name: accounts.accountName,
@@ -457,32 +470,65 @@ const updateContactsForAccounts = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
 const removeContactFromAccount = async (req, res) => {
-  const { accountId, contactId } = req.params; // Assuming you are passing the accountId and contactId as params
+  const { accountId, contactId, userId } = req.params;
+
+  // Validate MongoDB ObjectIDs
+  if (
+    !mongoose.Types.ObjectId.isValid(accountId) ||
+    !mongoose.Types.ObjectId.isValid(contactId) ||
+    !mongoose.Types.ObjectId.isValid(userId)
+  ) {
+    return res.status(400).json({ error: "Invalid accountId, contactId, or userId" });
+  }
 
   try {
-    // Validate the accountId and contactId are valid MongoDB ObjectIDs
-    if (!mongoose.Types.ObjectId.isValid(accountId) || !mongoose.Types.ObjectId.isValid(contactId)) {
-      return res.status(400).json({ error: "Invalid accountId or contactId" });
+    // 1️⃣ Remove contactId from account's contacts array
+    await Accounts.findByIdAndUpdate(accountId, { $pull: { contacts: contactId } });
+
+    // 2️⃣ Remove userId from account's users array
+    await Accounts.findByIdAndUpdate(accountId, { $pull: { userid: userId } });
+
+    // // 3️⃣ Remove userId from contact's users array
+    // await Contacts.findByIdAndUpdate(contactId, { $pull: { userid: userId } });
+
+    // 4️⃣ Delete the user from Users collection
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // Use the $pull operator to remove the contactId from the contacts array
-    const updatedAccount = await Accounts.findByIdAndUpdate(
-      accountId,
-      { $pull: { contacts: contactId } },
-      { new: true } // Return the updated account after the removal
-    );
-
-    if (!updatedAccount) {
-      return res.status(404).json({ error: "Account not found" });
-    }
-
-    res.status(200).json({ message: "Contact removed successfully", updatedAccount });
+    res.status(200).json({ message: "Contact and user removed, user deleted successfully" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
+// const removeContactFromAccount = async (req, res) => {
+//   const { accountId, contactId } = req.params; // Assuming you are passing the accountId and contactId as params
+
+//   try {
+//     // Validate the accountId and contactId are valid MongoDB ObjectIDs
+//     if (!mongoose.Types.ObjectId.isValid(accountId) || !mongoose.Types.ObjectId.isValid(contactId)) {
+//       return res.status(400).json({ error: "Invalid accountId or contactId" });
+//     }
+
+//     // Use the $pull operator to remove the contactId from the contacts array
+//     const updatedAccount = await Accounts.findByIdAndUpdate(
+//       accountId,
+//       { $pull: { contacts: contactId } },
+//       { new: true } // Return the updated account after the removal
+//     );
+
+//     if (!updatedAccount) {
+//       return res.status(404).json({ error: "Account not found" });
+//     }
+
+//     res.status(200).json({ message: "Contact removed successfully", updatedAccount });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 const getActiveAccountList = async (req, res) => {
   try {

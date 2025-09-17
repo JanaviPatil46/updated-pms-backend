@@ -292,7 +292,7 @@ const adminSignup = async (req, res) => {
     contact.login = false;
     contact.notify = false;
     contact.emailSync = false;
-    contact.userid = newUser._id
+    // contact.userid = newUser._id
     await contact.save();
 
     res.status(201).json({

@@ -115,8 +115,9 @@ userSchema.statics.signup = async function (data) {
   const {username, email, password, role, login, notify, emailSync,contactId} =data
 
   //todo validation all fields required
+  console.log("data",data)
 
-  if (!username || !email || !password || !role) {
+  if (!username || !email || !password ) {
     throw Error("all fields required ");
   }
 
