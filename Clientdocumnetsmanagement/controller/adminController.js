@@ -171,6 +171,106 @@ const moveBetweenSealedUnsealed = async (req, res) => {
   }
 };
 
+// const getsClientUploadedDocs = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     if (!id) {
+//       return res.status(400).json({ error: "Missing folder ID in request params." });
+//     }
+
+//     const uploadsPath = path.join(__dirname, `../uploads/AccountId/${id}/Client Uploaded Documents`);
+
+//     // Recursive function to get all files and subfolders
+//     const getAllItems = async (dir) => {
+//       const entries = await fs.readdir(dir, { withFileTypes: true });
+//       const items = await Promise.all(entries.map(async (entry) => {
+//         const fullPath = path.join(dir, entry.name);
+//         if (entry.isDirectory()) {
+//           const subItems = await getAllItems(fullPath);
+//           return { folder: entry.name, contents: subItems };
+//         } else {
+//           return { file: entry.name };
+//         }
+//       }));
+//       return items;
+//     };
+
+//     // Check if directory exists
+//     await fs.access(uploadsPath);
+
+//     const folderContents = await getAllItems(uploadsPath);
+
+//     // Wrap with only "Client Uploaded Documents"
+//     const result = {
+//       folders: [
+//         {
+//           folder: "Client Uploaded Documents",
+//           contents: folderContents
+//         }
+//       ]
+//     };
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error fetching client uploaded documents:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+// const getsClientUploadedDocs = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     if (!id) {
+//       return res.status(400).json({ error: "Missing folder ID in request params." });
+//     }
+
+//     const uploadsPath = path.join(__dirname, `../uploads/AccountId/${id}/Client Uploaded Documents`);
+
+//     // Recursive function to get all files and subfolders
+//     const getAllItems = async (dir) => {
+//       const entries = await fs.readdir(dir, { withFileTypes: true });
+//       const items = await Promise.all(entries.map(async (entry) => {
+//         const fullPath = path.join(dir, entry.name);
+//         if (entry.isDirectory()) {
+//           const subItems = await getAllItems(fullPath);
+//           return { folder: entry.name, contents: subItems };
+//         } else {
+//           return { file: entry.name };
+//         }
+//       }));
+//       return items;
+//     };
+
+//     // Check if directory exists
+//     await fs.access(uploadsPath);
+
+//     let folderContents = await getAllItems(uploadsPath);
+
+//     // ✅ Flatten "sealed" and "unsealed"
+//     folderContents = folderContents.flatMap(item =>
+//       item.folder === "sealed" || item.folder === "unsealed"
+//         ? item.contents
+//         : [item]
+//     );
+
+//     // Wrap with only "Client Uploaded Documents"
+//     const result = {
+//       folders: [
+//         {
+//           folder: "Client Uploaded Documents",
+//           contents: folderContents
+//         }
+//       ]
+//     };
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error fetching client uploaded documents:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
 const getsClientUploadedDocs = async (req, res) => {
   try {
     const { id } = req.params;
@@ -199,14 +299,18 @@ const getsClientUploadedDocs = async (req, res) => {
     // Check if directory exists
     await fs.access(uploadsPath);
 
-    const folderContents = await getAllItems(uploadsPath);
+    let folderContents = await getAllItems(uploadsPath);
+
+    // ✅ Get only "unsealed" folder contents
+    const unsealed = folderContents.find(item => item.folder === "unsealed");
+    const finalContents = unsealed ? unsealed.contents : [];
 
     // Wrap with only "Client Uploaded Documents"
     const result = {
       folders: [
         {
           folder: "Client Uploaded Documents",
-          contents: folderContents
+          contents: finalContents
         }
       ]
     };
@@ -217,6 +321,8 @@ const getsClientUploadedDocs = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
 const getsPrivateDocs = async (req, res) => {
   try {
     const { id } = req.params;

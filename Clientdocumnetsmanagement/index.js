@@ -552,6 +552,98 @@ app.get('/api/files', async (req, res) => {
   }
 });
 
+
+//move file 
+async function copyDirectory(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (let entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+async function deleteDirectory(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+    for (let entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        await deleteDirectory(fullPath);
+      } else {
+        fs.unlinkSync(fullPath);
+      }
+    }
+    fs.rmdirSync(dirPath);
+  }
+}
+
+app.post("/movefile", async (req, res) => {
+  try {
+    let { sourcePath, destinationPath } = req.body;
+
+    if (!sourcePath || !destinationPath) {
+      return res
+        .status(400)
+        .json({ error: "sourcePath and destinationPath are required" });
+    }
+
+    const absoluteSource = path.resolve(sourcePath);
+    const absoluteDestinationFolder = path.resolve(destinationPath);
+
+    // Get stats to check if it's file or folder
+    const stats = fs.statSync(absoluteSource);
+
+    if (stats.isDirectory()) {
+      // ✅ Move entire folder
+      const folderName = path.basename(absoluteSource);
+      const finalDestination = path.join(absoluteDestinationFolder, folderName);
+
+      await copyDirectory(absoluteSource, finalDestination);
+      await deleteDirectory(absoluteSource);
+
+      return res.json({
+        message: "Folder moved successfully",
+        oldPath: absoluteSource,
+        newPath: finalDestination,
+      });
+    } else {
+      // ✅ Move single file
+      const fileName = path.basename(absoluteSource);
+      const finalDestination = path.join(absoluteDestinationFolder, fileName);
+
+      if (!fs.existsSync(absoluteDestinationFolder)) {
+        fs.mkdirSync(absoluteDestinationFolder, { recursive: true });
+      }
+
+      fs.copyFileSync(absoluteSource, finalDestination);
+      fs.unlinkSync(absoluteSource);
+
+      return res.json({
+        message: "File moved successfully",
+        oldPath: absoluteSource,
+        newPath: finalDestination,
+      });
+    }
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
+  }
+});
+
 // const sendApprovalEmail = require("./utils/sendApprovalEmail");
 // app.post("/request-approval", async (req, res) => {
 //   const { accountId, filename, fileUrl, clientEmail } = req.body;
