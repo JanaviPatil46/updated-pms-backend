@@ -112,23 +112,57 @@ const getAllAccounts = async (req, res) => {
 };
 
 //Get a single Account
+// const getAccount = async (req, res) => {
+//   const { id } = req.params;
+
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid Account ID" });
+//   }
+//   try {
+//     const account = await Accounts.findById(id) .populate({ path: 'contacts', model: 'Contacts' ,populate: {
+//           path: "userid",   // 👈 populate userid inside each contact
+//           model: "User"
+//         }});;
+
+//     if (!account) {
+//       return res.status(404).json({ error: "No such Account" });
+//     }
+
+//     res.status(200).json({ message: "Account retrieved successfully", account });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 const getAccount = async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(404).json({ error: "Invalid Account ID" });
   }
+
   try {
-    const account = await Accounts.findById(id) .populate({ path: 'contacts', model: 'Contacts' ,populate: {
-          path: "userid",   // 👈 populate userid inside each contact
-          model: "User"
-        }});;
+    const account = await Accounts.findById(id)
+      .populate({ path: "tags", model: "Tags" })
+      .populate({ path: "teamMember", model: "User" })
+      .populate({
+        path: "contacts",
+        model: "Contacts",
+        select: "_id contactName description email firstName middleName lastName" // 👈 removed userid
+      })
+      .populate({
+        path: "userid",
+        model: "User",
+        select: "_id email login notify emailSync contactId"
+      });
 
     if (!account) {
       return res.status(404).json({ error: "No such Account" });
     }
 
-    res.status(200).json({ message: "Account retrieved successfully", account });
+    res.status(200).json({
+      message: "Account retrieved successfully",
+      account,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
