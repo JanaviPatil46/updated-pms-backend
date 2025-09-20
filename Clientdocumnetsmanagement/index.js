@@ -644,6 +644,66 @@ app.post("/movefile", async (req, res) => {
   }
 });
 
+app.post("/toggleSeal", async (req, res) => {
+  try {
+    const { folderId, relativePath, action } = req.body;
+    // relativePath = file/folder path inside "sealed" or "unsealed"
+    // action = "seal" | "unseal"
+
+    if (!folderId || !relativePath || !["seal", "unseal"].includes(action)) {
+      return res.status(400).json({ error: "folderId, relativePath and valid action are required" });
+    }
+
+    const basePath = path.resolve(`uploads/AccountId/${folderId}/Client Uploaded Documents`);
+    const sourceRoot = action === "seal" ? "unsealed" : "sealed";
+    const destRoot = action === "seal" ? "sealed" : "unsealed";
+
+    const absoluteSource = path.join(basePath, sourceRoot, relativePath);
+    const absoluteDestinationFolder = path.join(basePath, destRoot);
+
+    if (!fs.existsSync(absoluteSource)) {
+      return res.status(404).json({ error: "Source file/folder not found" });
+    }
+
+    const stats = fs.statSync(absoluteSource);
+
+    if (stats.isDirectory()) {
+      // Move folder
+      const folderName = path.basename(absoluteSource);
+      const finalDestination = path.join(absoluteDestinationFolder, folderName);
+
+      await copyDirectory(absoluteSource, finalDestination);
+      await deleteDirectory(absoluteSource);
+
+      return res.json({
+        message: `Folder ${action}ed successfully`,
+        oldPath: absoluteSource,
+        newPath: finalDestination,
+      });
+    } else {
+      // Move file
+      const fileName = path.basename(absoluteSource);
+      const finalDestination = path.join(absoluteDestinationFolder, fileName);
+
+      if (!fs.existsSync(absoluteDestinationFolder)) {
+        fs.mkdirSync(absoluteDestinationFolder, { recursive: true });
+      }
+
+      fs.copyFileSync(absoluteSource, finalDestination);
+      fs.unlinkSync(absoluteSource);
+
+      return res.json({
+        message: `File ${action}ed successfully`,
+        oldPath: absoluteSource,
+        newPath: finalDestination,
+      });
+    }
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    res.status(500).json({ error: "Internal server error", details: error.message });
+  }
+});
+
 // const sendApprovalEmail = require("./utils/sendApprovalEmail");
 // app.post("/request-approval", async (req, res) => {
 //   const { accountId, filename, fileUrl, clientEmail } = req.body;
