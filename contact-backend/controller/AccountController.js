@@ -3,6 +3,7 @@ const Accounts = require("../models/AccountModel"); // Adjust the path to your a
 const Tags = require("../models/tagModel");
 const Contacts = require("../models/contactsModel");
 const User = require("../models/userModel");
+const Clients = require("../models/clientSignUpModel")
 const companyAddress = require("../models/companyAddressModel");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
@@ -268,6 +269,24 @@ const getAccountbyIdAll = async (req, res) => {
 
 //delete a Account
 
+// const deleteAccount = async (req, res) => {
+//   const { id } = req.params;
+
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(404).json({ error: "Invalid Account ID" });
+//   }
+
+//   try {
+//     const deletedAccount = await Accounts.findByIdAndDelete({ _id: id });
+//     if (!deletedAccount) {
+//       return res.status(404).json({ error: "No such Account" });
+//     }
+//     res.status(200).json({ message: "Account deleted successfully", deletedAccount });
+//   } catch (error) {
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
+
 const deleteAccount = async (req, res) => {
   const { id } = req.params;
 
@@ -276,15 +295,33 @@ const deleteAccount = async (req, res) => {
   }
 
   try {
-    const deletedAccount = await Accounts.findByIdAndDelete({ _id: id });
-    if (!deletedAccount) {
+    // Find the account first
+    const account = await Accounts.findById(id);
+    if (!account) {
       return res.status(404).json({ error: "No such Account" });
     }
-    res.status(200).json({ message: "Account deleted successfully", deletedAccount });
+
+    const accountUserId = account.userid; // assuming userid is stored in Account
+const accountContactId = account.contacts;
+    // Delete account
+    const deletedAccount = await Accounts.findByIdAndDelete(id);
+
+    // Delete related users & clients
+    const deletedUsers = await User.deleteMany({ _id: accountUserId });
+    const deletedClients = await Clients.deleteMany({ userid: accountUserId });
+const deletedContacts = await Contacts.deleteMany({_id: accountContactId})
+    res.status(200).json({
+      message: "Account and related data deleted successfully",
+      deletedAccount,
+      deletedUsersCount: deletedUsers.deletedCount,
+      deletedClientsCount: deletedClients.deletedCount,
+      deletedContactsCount : deletedContacts
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 };
+
 
 
 const updateAccount = async (req, res) => {

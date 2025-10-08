@@ -346,6 +346,103 @@ const createChats = async (req, res) => {
     return res.status(500).json({ error: "Error creating chats" });
   }
 };
+const createChatsForAdmin = async (req, res) => {
+  const {
+    accountids,
+    chattemplateid,
+    templatename,
+    from,
+    chatsubject,
+    description,
+    active,
+  } = req.body;
+
+  if (!Array.isArray(accountids)) {
+    return res.status(400).json({ error: "accountids must be an array" });
+  }
+
+  try {
+    const createdChats = [];
+
+    // Configure the email transporter
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    for (const accountid of accountids) {
+      // Fetch account with admin info
+      const account = await Account.findById(accountid).populate("adminUserId");
+      if (!account) {
+        console.warn(`Account not found for ID: ${accountid}`);
+        continue;
+      }
+
+      const adminEmail =
+        account.adminUserId?.emailSyncEmail || account.adminUserId?.email || null;
+
+      // Only send email if admin email exists
+      if (adminEmail) {
+        const clientMessage = description[0]?.message || "No content";
+        const subject = chatsubject || "New Chat Message";
+        const accountName = account.accountName || "Unknown Account";
+        const clientId = account._id;
+
+        const mailOptions = {
+          from: `<${process.env.EMAIL}>`,
+          to: adminEmail,
+          subject: `#${clientId} New message ${subject} from ${accountName}`,
+          html: `
+            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Account:</strong> ${accountName}</p>
+            <p><strong>Message:</strong><br/>${clientMessage}</p>
+          `,
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          console.log(`Email sent to admin: ${adminEmail}`);
+        } catch (emailError) {
+          console.error(
+            `Failed to send email to admin ${adminEmail}:`,
+            emailError.message
+          );
+        }
+      } else {
+        console.warn(`Admin email not found for account ID: ${accountid}`);
+      }
+
+      // Create the chat regardless of whether admin email exists
+      const newChat = await AccountwiseChat.create({
+        accountid,
+        chattemplateid,
+        templatename,
+        from,
+        chatsubject,
+        description,
+        active,
+      });
+
+      createdChats.push(newChat);
+      console.log("New chat created:", newChat);
+    }
+
+    return res
+      .status(201)
+      .json({ message: "Chats created successfully", createdChats });
+  } catch (error) {
+    console.error("Error creating chats:", error);
+    return res.status(500).json({ error: "Error creating chats" });
+  }
+};
 
 // Delete a ChatTemplate
 const deleteChats = async (req, res) => {
@@ -1027,41 +1124,65 @@ const addClientTask = async (req, res) => {
 };
 
 //update task client
+// const updateTaskCheckedStatus = async (req, res) => {
+//   const { chatId, taskUpdates } = req.body;
+//   // console.log(req.body);
+//   // taskUpdates should be an array of objects, e.g., [{ id: "1", checked: true }, { id: "2", checked: false }]
+//   try {
+//     // Find the chat document
+//     const chat = await AccountwiseChat.findById(chatId);
+//     if (!chat) {
+//       return res.status(404).json({ message: "Chat not found" });
+//     }
+
+//     // Iterate through the clienttasks array and update the checked property
+//     chat.clienttasks = chat.clienttasks.map((subArray) =>
+//       subArray.map((task) => {
+//         const update = taskUpdates.find((update) => update.id === task.id);
+//         if (update) {
+//           return { ...task, checked: update.checked }; // Update the checked property
+//         }
+//         return task; // Return the task as is if no update is found
+//       })
+//     );
+
+//     // Save the updated document
+//     const updatedChat = await chat.save();
+
+//     // console.log("Task(s) updated successfully.");
+//     res.status(200).json({
+//       message: "Task(s) updated successfully",
+//       updatedChat,
+//     });
+//   } catch (error) {
+//     console.error("Error updating task(s):", error.message);
+//     res
+//       .status(500)
+//       .json({ message: "Error updating task(s)", error: error.message });
+//   }
+// };
+
 const updateTaskCheckedStatus = async (req, res) => {
   const { chatId, taskUpdates } = req.body;
-  // console.log(req.body);
-  // taskUpdates should be an array of objects, e.g., [{ id: "1", checked: true }, { id: "2", checked: false }]
   try {
-    // Find the chat document
     const chat = await AccountwiseChat.findById(chatId);
-    if (!chat) {
-      return res.status(404).json({ message: "Chat not found" });
-    }
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
 
-    // Iterate through the clienttasks array and update the checked property
-    chat.clienttasks = chat.clienttasks.map((subArray) =>
-      subArray.map((task) => {
-        const update = taskUpdates.find((update) => update.id === task.id);
-        if (update) {
-          return { ...task, checked: update.checked }; // Update the checked property
-        }
-        return task; // Return the task as is if no update is found
-      })
-    );
+    // Update each task in clienttasks
+    chat.clienttasks = chat.clienttasks.map((task) => {
+      const update = taskUpdates.find((u) => u.id === task.id);
+      return update ? { ...task, checked: update.checked } : task;
+    });
 
-    // Save the updated document
     const updatedChat = await chat.save();
 
-    // console.log("Task(s) updated successfully.");
     res.status(200).json({
       message: "Task(s) updated successfully",
       updatedChat,
     });
   } catch (error) {
     console.error("Error updating task(s):", error.message);
-    res
-      .status(500)
-      .json({ message: "Error updating task(s)", error: error.message });
+    res.status(500).json({ message: "Error updating task(s)", error: error.message });
   }
 };
 
@@ -1820,5 +1941,5 @@ module.exports = {
   getUnreadMessages,
   markMessageAsRead,
   markAllMessagesAsRead,
-  updateChatFromClient,
+  updateChatFromClient,createChatsForAdmin
 };

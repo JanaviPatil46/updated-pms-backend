@@ -19,7 +19,7 @@ const firmDocsRoutes = require("./routes/firmDocsRouter")
 // Enable CORS for frontend
 app.use(cors({
   origin: ['http://localhost:3001', 'http://127.0.0.1:3001','http://localhost:3000'], // allow both
-  methods: ['GET', 'POST', 'PATCH'],
+  methods: ['GET', 'POST', 'PATCH','DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json()); // Allows parsing JSON body

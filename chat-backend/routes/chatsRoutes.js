@@ -13,7 +13,7 @@ const {
     deleteMessage,
     addClientTask,updateChatFromClient,
     updateTaskCheckedStatus,getUnreadChatsWithLatestMessage,updateChatStatus,getUnreadChatsByAccountId,
-getUnreadMessages , markMessageAsRead,
+getUnreadMessages , markMessageAsRead,createChatsForAdmin,
   markAllMessagesAsRead
 } = require('../controller/chatsController');  // Adjust the path to where your controller file is
 
@@ -29,6 +29,7 @@ router.get('/chatsaccountwise/chatlistbyaccount/:id', getchatAccountwiselist);
 
 // Route to create a new chat template
 router.post('/chatsaccountwise', createChats);
+router.post("/chatsaccountwise/admin", createChatsForAdmin);
 
 // Route to delete a chat template by its ID
 router.delete('/chatsaccountwise/:id', deleteChats);
