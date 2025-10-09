@@ -10,6 +10,7 @@ const approvalSchema = new mongoose.Schema(
     filename: { type: String, required: true },
     fileUrl: { type: String, required: true },
     clientEmail: { type: String, required: true },
+    description:{type: String},
     status: {
       type: String,
       enum: ["pending", "approved", "cancelled"],
